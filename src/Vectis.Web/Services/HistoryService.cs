@@ -4,6 +4,7 @@ namespace Vectis.Web.Services;
 
 public sealed record HistorySnapshot(
     IReadOnlyList<PumpingSession> PumpingSessions,
+    IReadOnlyList<PreparedBottle> PreparedBottles,
     IReadOnlyList<Feeding> Feedings,
     IReadOnlyList<AuditEntry> AuditEntries);
 
@@ -34,6 +35,7 @@ public sealed class HistoryService
 
         return new HistorySnapshot(
             state.PumpingSessions.Where(item => item.BabyId == babyId).OrderByDescending(item => item.PumpedAt).ToList(),
+            state.PreparedBottles.Where(item => item.BabyId == babyId).OrderByDescending(item => item.PreparedAt).ToList(),
             state.Feedings.Where(item => item.BabyId == babyId).OrderByDescending(item => item.StartedAt).ToList(),
             state.AuditEntries.Where(item => familyUserIds.Contains(item.UserId)).OrderByDescending(item => item.OccurredAt).Take(30).ToList());
     }

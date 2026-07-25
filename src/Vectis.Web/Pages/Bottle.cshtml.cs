@@ -76,7 +76,7 @@ public sealed class BottleModel : PageModel
             }
 
             await _bottleService.PrepareAndFeedAsync(new PrepareAndFeedCommand(context.User.Id, context.Baby.Id, sources, Input.ConsumedMl, Input.Reaction, Input.LeftoverOutcome, Input.Notes));
-            return RedirectToPage("/History");
+            return RedirectToPage("/History", new { saved = "bottle" });
         }
         catch (InvalidOperationException ex)
         {

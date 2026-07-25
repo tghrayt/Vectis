@@ -51,4 +51,16 @@ public static class DisplayLabels
             _ => reaction.ToString()
         };
     }
+
+    public static string BottleStatus(string status)
+    {
+        return status switch
+        {
+            "prepared" => "Prepare",
+            "consumed" => "Consomme",
+            "partially_consumed" => "Partiellement consomme",
+            "not_consumed" => "Non consomme",
+            _ => status
+        };
+    }
 }

@@ -137,7 +137,7 @@ public sealed class VectisEngine
             }
         }
 
-        foreach (var source in sources)
+        foreach (var source in requestedByContainer)
         {
             var index = state.Containers.FindIndex(container => container.Id == source.ContainerId);
             var container = state.Containers[index];
@@ -147,7 +147,7 @@ public sealed class VectisEngine
             state.StockMovements.Add(new StockMovement(Guid.NewGuid(), container.Id, container.Location, container.Location, container.Status, status, Now(), userId, $"Prelevement de {source.QuantityMl} ml"));
         }
 
-        var bottle = new PreparedBottle(Guid.NewGuid(), babyId, sources.Sum(source => source.QuantityMl), Now(), userId, [.. sources], "prepared", notes.Trim());
+        var bottle = new PreparedBottle(Guid.NewGuid(), babyId, requestedByContainer.Sum(source => source.QuantityMl), Now(), userId, [.. requestedByContainer], "prepared", notes.Trim());
         state.PreparedBottles.Add(bottle);
         Audit(state, userId, "prepare", nameof(PreparedBottle), bottle.Id, "", $"{bottle.TotalQuantityMl} ml");
         return bottle;
@@ -183,6 +183,14 @@ public sealed class VectisEngine
             notes.Trim());
 
         state.Feedings.Add(feeding);
+        if (bottleId is not null)
+        {
+            var bottleIndex = state.PreparedBottles.FindIndex(bottle => bottle.Id == bottleId.Value);
+            var bottle = state.PreparedBottles[bottleIndex];
+            var status = consumedMl == 0 ? "not_consumed" : consumedMl == preparedMl ? "consumed" : "partially_consumed";
+            state.PreparedBottles[bottleIndex] = bottle with { Status = status };
+        }
+
         Audit(state, userId, "feed", nameof(Feeding), feeding.Id, "", $"{consumedMl}/{preparedMl} ml");
         return feeding;
     }

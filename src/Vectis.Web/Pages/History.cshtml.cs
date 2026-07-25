@@ -19,8 +19,10 @@ public sealed class HistoryModel : PageModel
     }
 
     public IReadOnlyList<PumpingSession> PumpingSessions { get; private set; } = [];
+    public IReadOnlyList<PreparedBottle> PreparedBottles { get; private set; } = [];
     public IReadOnlyList<Feeding> Feedings { get; private set; } = [];
     public IReadOnlyList<AuditEntry> AuditEntries { get; private set; } = [];
+    public bool BottleSaved { get; private set; }
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -30,8 +32,10 @@ public sealed class HistoryModel : PageModel
             return RedirectToPage("/Account/Login");
         }
 
+        BottleSaved = Request.Query["saved"] == "bottle";
         var history = await _historyService.GetAsync(context.User.Id, context.Baby.Id);
         PumpingSessions = history.PumpingSessions;
+        PreparedBottles = history.PreparedBottles;
         Feedings = history.Feedings;
         AuditEntries = history.AuditEntries;
         return Page();

@@ -11,6 +11,13 @@
     </div>
 </section>
 
+@if (Model.BottleSaved)
+{
+    <div class="card notice" style="margin-bottom:16px">
+        <p>Biberon enregistre. Le stock et l'historique ont ete mis a jour.</p>
+    </div>
+}
+
 <section class="grid two">
     <div class="card">
         <h2>Tirages</h2>
@@ -27,18 +34,46 @@
         </div>
     </div>
     <div class="card">
-        <h2>Consommations</h2>
+        <h2>Biberons prepares</h2>
         <div class="table-wrap">
             <table>
-                <thead><tr><th>Date</th><th>Prepare</th><th>Bu</th><th>Reste</th></tr></thead>
+                <thead><tr><th>Date</th><th>Quantite</th><th>Statut</th><th>Sources</th></tr></thead>
                 <tbody>
-                @foreach (var item in Model.Feedings)
+                @foreach (var item in Model.PreparedBottles)
                 {
-                    <tr><td>@item.StartedAt.LocalDateTime.ToString("g")</td><td>@item.PreparedQuantityMl ml</td><td>@item.ConsumedQuantityMl ml</td><td>@item.LeftoverQuantityMl ml @item.LeftoverOutcome</td></tr>
+                    <tr>
+                        <td>@item.PreparedAt.LocalDateTime.ToString("g")</td>
+                        <td>@item.TotalQuantityMl ml</td>
+                        <td><span class="pill">@DisplayLabels.BottleStatus(item.Status)</span></td>
+                        <td>@item.Sources.Count</td>
+                    </tr>
+                }
+                @if (Model.PreparedBottles.Count == 0)
+                {
+                    <tr><td colspan="4" class="muted">Aucun biberon prepare.</td></tr>
                 }
                 </tbody>
             </table>
         </div>
+    </div>
+</section>
+
+<section class="card" style="margin-top:16px">
+    <h2>Consommations</h2>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Date</th><th>Prepare</th><th>Bu</th><th>Reste</th></tr></thead>
+            <tbody>
+            @foreach (var item in Model.Feedings)
+            {
+                <tr><td>@item.StartedAt.LocalDateTime.ToString("g")</td><td>@item.PreparedQuantityMl ml</td><td>@item.ConsumedQuantityMl ml</td><td>@item.LeftoverQuantityMl ml @item.LeftoverOutcome</td></tr>
+            }
+            @if (Model.Feedings.Count == 0)
+            {
+                <tr><td colspan="4" class="muted">Aucune consommation enregistree.</td></tr>
+            }
+            </tbody>
+        </table>
     </div>
 </section>
 
