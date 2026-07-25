@@ -30,7 +30,7 @@ public sealed class IndexModel : PageModel
         }
 
         BabyName = context.Baby.FirstName;
-        Summary = await _stockService.GetSummaryAsync(context.Baby.Id);
+        Summary = await _stockService.GetSummaryAsync(context.User.Id, context.Baby.Id);
         return Page();
     }
 }

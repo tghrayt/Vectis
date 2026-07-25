@@ -28,7 +28,7 @@ public sealed class StockModel : PageModel
             return RedirectToPage("/Account/Login");
         }
 
-        Containers = await _stockService.GetAvailableContainersAsync(context.Baby.Id);
+        Containers = await _stockService.GetAvailableContainersAsync(context.User.Id, context.Baby.Id);
         return Page();
     }
 }

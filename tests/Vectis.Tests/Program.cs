@@ -1,4 +1,5 @@
 using Vectis.Domain;
+using Vectis.Web.Services;
 
 var tests = new BusinessRuleTests();
 tests.RunAll();
@@ -17,6 +18,8 @@ internal sealed class BusinessRuleTests
         FamilyAccessIsIsolated();
         FamilyInvitationFlow();
         CancelledInvitationCannotBeAccepted();
+        StockReadRequiresFamilyAccess();
+        HistoryReadRequiresFamilyAccess();
     }
 
     private void PumpingContainersCannotExceedTotal()
@@ -107,6 +110,35 @@ internal sealed class BusinessRuleTests
         Throws(() => AcceptInvitation(state, invitation.Id, caregiver.Id));
     }
 
+    private void StockReadRequiresFamilyAccess()
+    {
+        var (state, _, baby) = CreateReadyState();
+        var outsider = _engine.RegisterUser(state, "Autre", "Parent", "outsider@test.local", "hash");
+        var otherFamily = _engine.CreateFamily(state, outsider.Id, "Autre famille");
+        _engine.CreateBaby(state, outsider.Id, otherFamily.Id, "Nora", new DateOnly(2026, 2, 1), 120, "");
+
+        var service = new StockService(new MemoryAppStore(state), _engine);
+        ThrowsAsync(() => service.GetSummaryAsync(outsider.Id, baby.Id));
+        ThrowsAsync(() => service.GetAvailableContainersAsync(outsider.Id, baby.Id));
+    }
+
+    private void HistoryReadRequiresFamilyAccess()
+    {
+        var (state, admin, baby) = CreateReadyState();
+        var outsider = _engine.RegisterUser(state, "Autre", "Parent", "outsider@test.local", "hash");
+        var otherFamily = _engine.CreateFamily(state, outsider.Id, "Autre famille");
+        _engine.CreateBaby(state, outsider.Id, otherFamily.Id, "Nora", new DateOnly(2026, 2, 1), 120, "");
+        state.AuditEntries.Add(new AuditEntry(Guid.NewGuid(), outsider.Id, "other_action", nameof(Family), otherFamily.Id, "", "", DateTimeOffset.UtcNow));
+        state.AuditEntries.Add(new AuditEntry(Guid.NewGuid(), admin.Id, "family_action", nameof(Baby), baby.Id, "", "", DateTimeOffset.UtcNow));
+
+        var service = new HistoryService(new MemoryAppStore(state));
+        ThrowsAsync(() => service.GetAsync(outsider.Id, baby.Id));
+
+        var history = service.GetAsync(admin.Id, baby.Id).GetAwaiter().GetResult();
+        Equal(false, history.AuditEntries.Any(item => item.UserId == outsider.Id));
+        Equal(true, history.AuditEntries.Any(item => item.UserId == admin.Id));
+    }
+
     private static FamilyInvitation Invite(AppState state, Guid adminUserId, Guid familyId, string email, UserRole role)
     {
         if (state.Members.All(member => member.UserId != adminUserId || member.FamilyId != familyId || member.Role != UserRole.Admin || member.Status != "accepted"))
@@ -185,6 +217,40 @@ internal sealed class BusinessRuleTests
 
         throw new InvalidOperationException("Une exception metier etait attendue.");
     }
+
+    private static void ThrowsAsync(Func<Task> action)
+    {
+        try
+        {
+            action().GetAwaiter().GetResult();
+        }
+        catch (InvalidOperationException)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException("Une exception metier etait attendue.");
+    }
+}
+
+internal sealed class MemoryAppStore : IAppStore
+{
+    private readonly AppState _state;
+
+    public MemoryAppStore(AppState state)
+    {
+        _state = state;
+    }
+
+    public Task<AppState> LoadAsync() => Task.FromResult(_state);
+
+    public Task MutateAsync(Action<AppState> action)
+    {
+        action(_state);
+        return Task.CompletedTask;
+    }
+
+    public Task<T> MutateAsync<T>(Func<AppState, T> action) => Task.FromResult(action(_state));
 }
 
 internal sealed class FixedTimeProvider : TimeProvider

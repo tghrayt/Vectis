@@ -30,7 +30,7 @@ public sealed class HistoryModel : PageModel
             return RedirectToPage("/Account/Login");
         }
 
-        var history = await _historyService.GetAsync(context.Baby.Id);
+        var history = await _historyService.GetAsync(context.User.Id, context.Baby.Id);
         PumpingSessions = history.PumpingSessions;
         Feedings = history.Feedings;
         AuditEntries = history.AuditEntries;

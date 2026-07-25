@@ -90,7 +90,7 @@ public sealed class BottleModel : PageModel
             return;
         }
 
-        Containers = await _stockService.GetAvailableContainersAsync(context.Baby.Id);
+        Containers = await _stockService.GetAvailableContainersAsync(context.User.Id, context.Baby.Id);
     }
 
     public sealed class BottleInput
