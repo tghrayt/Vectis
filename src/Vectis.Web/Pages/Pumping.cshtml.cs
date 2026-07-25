@@ -11,10 +11,10 @@ namespace Vectis.Web.Pages;
 public sealed class PumpingModel : PageModel
 {
     private readonly CurrentUser _currentUser;
-    private readonly JsonAppStore _store;
+    private readonly IAppStore _store;
     private readonly VectisEngine _engine;
 
-    public PumpingModel(CurrentUser currentUser, JsonAppStore store, VectisEngine engine)
+    public PumpingModel(CurrentUser currentUser, IAppStore store, VectisEngine engine)
     {
         _currentUser = currentUser;
         _store = store;
@@ -52,7 +52,7 @@ public sealed class PumpingModel : PageModel
                     drafts.Add(new ContainerDraft(ContainerType.StorageBag, Input.Container2Ml, Input.Location2, ""));
                 }
 
-                _engine.AddPumpingSession(state, context.User.Id, context.Baby.Id, new DateTimeOffset(Input.PumpedAt), Input.TotalMl, Input.DurationMinutes, Input.Side, Input.Notes, drafts);
+                _engine.AddPumpingSession(state, context.User.Id, context.Baby.Id, new DateTimeOffset(Input.PumpedAt).ToUniversalTime(), Input.TotalMl, Input.DurationMinutes, Input.Side, Input.Notes, drafts);
             });
             return RedirectToPage("/Stock");
         }

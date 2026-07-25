@@ -10,9 +10,9 @@ namespace Vectis.Web.Pages;
 public sealed class HistoryModel : PageModel
 {
     private readonly CurrentUser _currentUser;
-    private readonly JsonAppStore _store;
+    private readonly IAppStore _store;
 
-    public HistoryModel(CurrentUser currentUser, JsonAppStore store)
+    public HistoryModel(CurrentUser currentUser, IAppStore store)
     {
         _currentUser = currentUser;
         _store = store;

@@ -26,12 +26,13 @@ Stack retenue pour cette premiere version :
 - .NET 10 ;
 - ASP.NET Core Razor Pages ;
 - domaine metier separe dans `Vectis.Domain` ;
-- stockage JSON local dans `src/Vectis.Web/App_Data/vectis-data.json` ;
+- PostgreSQL ;
+- EF Core avec migrations ;
 - authentification cookie ;
 - hachage de mot de passe PBKDF2 ;
 - tests metier via un runner console sans dependance NuGet externe.
 
-Ce choix permet de demarrer vite avec un monolithe modulaire, maintenable, simple a lancer sur Windows, et evolutif vers PostgreSQL/EF Core, API REST complete, PWA offline avancee ou application mobile native.
+Ce choix garde un monolithe modulaire, maintenable et simple a lancer, tout en posant une vraie base relationnelle pour les familles, utilisateurs, bebes, tirages, contenants, biberons, consommations, regles et audit.
 
 ## Architecture
 
@@ -39,12 +40,12 @@ Ce choix permet de demarrer vite avec un monolithe modulaire, maintenable, simpl
 Vectis.sln
 src/
   Vectis.Domain/     Modeles, etat applicatif, regles metier
-  Vectis.Web/        Razor Pages, auth, stockage JSON, interface responsive
+  Vectis.Web/        Razor Pages, auth, EF Core/PostgreSQL, interface responsive
 tests/
   Vectis.Tests/      Tests critiques des regles metier
 ```
 
-Le domaine ne depend pas du web. Le projet web charge l'etat JSON, applique les operations via `VectisEngine`, puis sauvegarde. Cette separation permettra de remplacer le stockage par une base relationnelle avec migrations sans reecrire les regles.
+Le domaine ne depend pas du web ni d'EF Core. Le projet web charge les donnees PostgreSQL via `EfAppStore`, applique les operations via `VectisEngine`, puis sauvegarde. Cette separation permet de faire evoluer la persistance sans disperser les regles metier dans les pages.
 
 ## UX et UI
 
@@ -103,16 +104,18 @@ Futur :
 Prerequis :
 
 - .NET SDK 10 installe.
+- Docker Desktop ou une instance PostgreSQL locale.
 
 Commandes :
 
 ```powershell
 cd C:\Users\Tghrayt\source\repos\Vectis
+docker compose up -d
 dotnet build
 dotnet run --project src/Vectis.Web
 ```
 
-Ouvre ensuite l'URL affichee par ASP.NET Core, souvent `https://localhost:7xxx` ou `http://localhost:5xxx`.
+Au demarrage, l'application applique automatiquement les migrations EF Core et cree les donnees de demonstration si la base est vide. Ouvre ensuite l'URL affichee par ASP.NET Core, souvent `https://localhost:7xxx` ou `http://localhost:5xxx`.
 
 Compte de demonstration :
 
@@ -137,19 +140,35 @@ Les tests verifient notamment :
 
 ## Donnees et configuration
 
-Les donnees locales sont stockees dans :
+La chaine de connexion de developpement est dans `src/Vectis.Web/appsettings.Development.json` :
 
-```text
-src/Vectis.Web/App_Data/vectis-data.json
+```json
+"ConnectionStrings": {
+  "Vectis": "Host=localhost;Port=5432;Database=vectis;Username=vectis;Password=vectis"
+}
 ```
 
-Ce fichier est ignore par Git. Pour repartir a zero, arrete l'application puis supprime ce fichier.
+Pour repartir a zero en local :
+
+```powershell
+docker compose down -v
+docker compose up -d
+dotnet run --project src/Vectis.Web
+```
+
+Les migrations EF Core sont dans `src/Vectis.Web/Data/Migrations`.
+
+Pour creer une nouvelle migration :
+
+```powershell
+dotnet tool restore
+dotnet tool run dotnet-ef migrations add NomDeMigration --project src/Vectis.Web --startup-project src/Vectis.Web --output-dir Data/Migrations
+```
 
 Les regles de conservation sont modifiables dans l'ecran `Regles`.
 
 ## Limites actuelles
 
-- Stockage JSON local, pas encore de base de donnees relationnelle.
 - Pas encore de notification mobile push.
 - Pas encore de vraie synchronisation hors connexion multi-utilisateur.
 - Pas encore d'impression d'etiquettes ni QR code.
@@ -163,4 +182,4 @@ Pour publier le MVP web :
 dotnet publish src/Vectis.Web -c Release
 ```
 
-En production, remplacer le stockage JSON par une base de donnees, configurer HTTPS, logs securises, sauvegardes, variables d'environnement, retention RGPD et secrets hors depot.
+En production, configurer HTTPS, logs securises, sauvegardes, variables d'environnement, retention RGPD et secrets hors depot. Remplacer les identifiants PostgreSQL de developpement par des secrets fournis par l'hebergeur ou l'environnement d'execution.

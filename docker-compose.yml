@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: vectis-postgres
+    environment:
+      POSTGRES_DB: vectis
+      POSTGRES_USER: vectis
+      POSTGRES_PASSWORD: vectis
+    ports:
+      - "5432:5432"
+    volumes:
+      - vectis-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  vectis-postgres-data:

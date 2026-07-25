@@ -8,9 +8,9 @@ public sealed record CurrentContext(AppUser User, Family? Family, Baby? Baby);
 public sealed class CurrentUser
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly JsonAppStore _store;
+    private readonly IAppStore _store;
 
-    public CurrentUser(IHttpContextAccessor httpContextAccessor, JsonAppStore store)
+    public CurrentUser(IHttpContextAccessor httpContextAccessor, IAppStore store)
     {
         _httpContextAccessor = httpContextAccessor;
         _store = store;

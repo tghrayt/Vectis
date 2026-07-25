@@ -10,10 +10,10 @@ namespace Vectis.Web.Pages;
 public sealed class IndexModel : PageModel
 {
     private readonly CurrentUser _currentUser;
-    private readonly JsonAppStore _store;
+    private readonly IAppStore _store;
     private readonly VectisEngine _engine;
 
-    public IndexModel(CurrentUser currentUser, JsonAppStore store, VectisEngine engine)
+    public IndexModel(CurrentUser currentUser, IAppStore store, VectisEngine engine)
     {
         _currentUser = currentUser;
         _store = store;

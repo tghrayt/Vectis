@@ -3,7 +3,7 @@ using Vectis.Domain;
 
 namespace Vectis.Web.Services;
 
-public sealed class JsonAppStore
+public sealed class JsonAppStore : IAppStore
 {
     private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web)
     {

@@ -11,10 +11,10 @@ namespace Vectis.Web.Pages.Account;
 
 public sealed class LoginModel : PageModel
 {
-    private readonly JsonAppStore _store;
+    private readonly IAppStore _store;
     private readonly PasswordHasher _hasher;
 
-    public LoginModel(JsonAppStore store, PasswordHasher hasher)
+    public LoginModel(IAppStore store, PasswordHasher hasher)
     {
         _store = store;
         _hasher = hasher;

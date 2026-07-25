@@ -10,10 +10,10 @@ namespace Vectis.Web.Pages;
 public sealed class StockModel : PageModel
 {
     private readonly CurrentUser _currentUser;
-    private readonly JsonAppStore _store;
+    private readonly IAppStore _store;
     private readonly VectisEngine _engine;
 
-    public StockModel(CurrentUser currentUser, JsonAppStore store, VectisEngine engine)
+    public StockModel(CurrentUser currentUser, IAppStore store, VectisEngine engine)
     {
         _currentUser = currentUser;
         _store = store;

@@ -10,9 +10,9 @@ namespace Vectis.Web.Pages;
 [Authorize]
 public sealed class SettingsModel : PageModel
 {
-    private readonly JsonAppStore _store;
+    private readonly IAppStore _store;
 
-    public SettingsModel(JsonAppStore store)
+    public SettingsModel(IAppStore store)
     {
         _store = store;
     }

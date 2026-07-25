@@ -11,11 +11,11 @@ namespace Vectis.Web.Pages.Account;
 
 public sealed class RegisterModel : PageModel
 {
-    private readonly JsonAppStore _store;
+    private readonly IAppStore _store;
     private readonly VectisEngine _engine;
     private readonly PasswordHasher _hasher;
 
-    public RegisterModel(JsonAppStore store, VectisEngine engine, PasswordHasher hasher)
+    public RegisterModel(IAppStore store, VectisEngine engine, PasswordHasher hasher)
     {
         _store = store;
         _engine = engine;
