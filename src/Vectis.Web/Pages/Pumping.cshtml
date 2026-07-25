@@ -1,0 +1,33 @@
+@page
+@model Vectis.Web.Pages.PumpingModel
+@{
+    ViewData["Title"] = "Ajouter un tirage";
+}
+
+<section class="page-head">
+    <div>
+        <h1>Ajouter un tirage</h1>
+        <p>Saisie rapide optimisee pour le parcours 180 ml en 100 + 80.</p>
+    </div>
+</section>
+
+<form method="post" class="card stack">
+    <div asp-validation-summary="ModelOnly" class="danger"></div>
+    <div class="grid two">
+        <label>Date et heure <input asp-for="Input.PumpedAt" type="datetime-local" /></label>
+        <label>Total tire (ml) <input asp-for="Input.TotalMl" type="number" min="1" /></label>
+    </div>
+    <div class="grid two">
+        <label>Duree (minutes) <input asp-for="Input.DurationMinutes" type="number" min="0" /></label>
+        <label>Cote <select asp-for="Input.Side"><option value="">Non precise</option><option value="left">Gauche</option><option value="right">Droit</option><option value="both">Les deux</option></select></label>
+    </div>
+    <h2>Contenants</h2>
+    <div class="grid two">
+        <label>Contenant 1 (ml) <input asp-for="Input.Container1Ml" type="number" min="1" /></label>
+        <label>Lieu 1 <select asp-for="Input.Location1" asp-items="Html.GetEnumSelectList<StorageLocation>()"></select></label>
+        <label>Contenant 2 (ml) <input asp-for="Input.Container2Ml" type="number" min="0" /></label>
+        <label>Lieu 2 <select asp-for="Input.Location2" asp-items="Html.GetEnumSelectList<StorageLocation>()"></select></label>
+    </div>
+    <label>Notes <textarea asp-for="Input.Notes"></textarea></label>
+    <button class="primary" type="submit">Enregistrer le tirage</button>
+</form>

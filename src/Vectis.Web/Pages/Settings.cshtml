@@ -1,0 +1,32 @@
+@page
+@model Vectis.Web.Pages.SettingsModel
+@{
+    ViewData["Title"] = "Regles";
+}
+
+<section class="page-head">
+    <div>
+        <h1>Regles de conservation</h1>
+        <p>Ces valeurs sont configurables. Verifie-les avec les recommandations sanitaires qui te concernent.</p>
+    </div>
+</section>
+
+<form method="post" class="card stack">
+    <div asp-validation-summary="ModelOnly" class="danger"></div>
+    <table>
+        <thead><tr><th>Lieu</th><th>Duree maximale (heures)</th></tr></thead>
+        <tbody>
+        @for (var i = 0; i < Model.Input.Rules.Count; i++)
+        {
+            <tr>
+                <td>
+                    @Model.Input.Rules[i].Location
+                    <input type="hidden" asp-for="Input.Rules[i].Location" />
+                </td>
+                <td><input asp-for="Input.Rules[i].DurationHours" type="number" min="1" /></td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <button class="primary" type="submit">Enregistrer les regles</button>
+</form>

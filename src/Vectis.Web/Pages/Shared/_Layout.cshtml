@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Vectis</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="manifest" href="~/manifest.webmanifest" />
+    <meta name="theme-color" content="#0f766e" />
+</head>
+<body>
+    <header>
+        <nav class="topbar">
+            <a class="brand" asp-page="/Index">Vectis</a>
+            <div class="navlinks">
+                <a asp-page="/Index">Tableau</a>
+                <a asp-page="/Pumping">Tirage</a>
+                <a asp-page="/Stock">Stock</a>
+                <a asp-page="/Bottle">Biberon</a>
+                <a asp-page="/History">Historique</a>
+                <a asp-page="/Settings">Regles</a>
+            </div>
+            <div class="session">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <form method="post" asp-page="/Account/Logout"><button type="submit">Sortir</button></form>
+                }
+                else
+                {
+                    <a asp-page="/Account/Login">Connexion</a>
+                }
+            </div>
+        </nav>
+    </header>
+    <div class="shell">
+        <main role="main">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer>
+        Vectis est un outil d'organisation. Les durees de conservation sont configurables et ne remplacent pas les recommandations medicales ou sanitaires.
+    </footer>
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

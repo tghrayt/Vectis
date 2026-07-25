@@ -1,0 +1,31 @@
+@page
+@model Vectis.Web.Pages.StockModel
+@{
+    ViewData["Title"] = "Stock";
+}
+
+<section class="page-head">
+    <div>
+        <h1>Stock</h1>
+        <p>Contenants disponibles tries par expiration estimee.</p>
+    </div>
+    <a class="button primary" asp-page="/Pumping">Ajouter</a>
+</section>
+
+<div class="card">
+    <table>
+        <thead><tr><th>ID</th><th>Quantite</th><th>Lieu</th><th>Statut</th><th>Expiration</th></tr></thead>
+        <tbody>
+        @foreach (var item in Model.Containers)
+        {
+            <tr>
+                <td>@item.Id.ToString()[..8]</td>
+                <td><span class="pill">@item.RemainingQuantityMl ml</span></td>
+                <td>@item.Location</td>
+                <td>@item.Status</td>
+                <td>@item.EstimatedExpiresAt.LocalDateTime.ToString("g")</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

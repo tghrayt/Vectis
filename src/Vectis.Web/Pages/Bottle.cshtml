@@ -1,0 +1,47 @@
+@page
+@model Vectis.Web.Pages.BottleModel
+@{
+    ViewData["Title"] = "Biberon";
+}
+
+<section class="page-head">
+    <div>
+        <h1>Preparer et enregistrer un biberon</h1>
+        <p>Selectionne jusqu'a deux contenants pour garder l'origine du lait.</p>
+    </div>
+</section>
+
+<form method="post" class="card stack">
+    <div asp-validation-summary="ModelOnly" class="danger"></div>
+    <div class="grid two">
+        <label>Source 1
+            <select asp-for="Input.Container1Id">
+                <option value="">Choisir</option>
+                @foreach (var container in Model.Containers)
+                {
+                    <option value="@container.Id">@container.Id.ToString()[..8] - @container.RemainingQuantityMl ml - exp @container.EstimatedExpiresAt.LocalDateTime.ToString("g")</option>
+                }
+            </select>
+        </label>
+        <label>Quantite source 1 (ml) <input asp-for="Input.Container1Ml" type="number" min="0" /></label>
+        <label>Source 2
+            <select asp-for="Input.Container2Id">
+                <option value="">Aucune</option>
+                @foreach (var container in Model.Containers)
+                {
+                    <option value="@container.Id">@container.Id.ToString()[..8] - @container.RemainingQuantityMl ml - exp @container.EstimatedExpiresAt.LocalDateTime.ToString("g")</option>
+                }
+            </select>
+        </label>
+        <label>Quantite source 2 (ml) <input asp-for="Input.Container2Ml" type="number" min="0" /></label>
+    </div>
+    <div class="grid two">
+        <label>Quantite bue (ml) <input asp-for="Input.ConsumedMl" type="number" min="0" /></label>
+        <label>Reaction
+            <select asp-for="Input.Reaction" asp-items="Html.GetEnumSelectList<FeedingReaction>()"></select>
+        </label>
+    </div>
+    <label>Devenir du reste <input asp-for="Input.LeftoverOutcome" /></label>
+    <label>Notes <textarea asp-for="Input.Notes"></textarea></label>
+    <button class="primary" type="submit">Preparer et enregistrer</button>
+</form>

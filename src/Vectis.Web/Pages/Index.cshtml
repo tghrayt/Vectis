@@ -1,0 +1,48 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Tableau de bord";
+}
+
+<section class="page-head">
+    <div>
+        <h1>Tableau de bord</h1>
+        <p>@Model.BabyName - logique premier expire, premier utilise.</p>
+    </div>
+    <div class="toolbar">
+        <a class="button primary" asp-page="/Pumping">Ajouter un tirage</a>
+        <a class="button" asp-page="/Bottle">Preparer un biberon</a>
+    </div>
+</section>
+
+@if (Model.Summary is not null)
+{
+    <section class="grid stats">
+        <div class="card metric"><span>Stock disponible</span><strong>@Model.Summary.TotalAvailableMl ml</strong></div>
+        <div class="card metric"><span>Au refrigerateur</span><strong>@Model.Summary.RefrigeratorMl ml</strong></div>
+        <div class="card metric"><span>Au congelateur</span><strong>@Model.Summary.FreezerMl ml</strong></div>
+        <div class="card metric"><span>Biberons estimes</span><strong>@Model.Summary.EstimatedBottles</strong></div>
+    </section>
+
+    <section class="grid two" style="margin-top:16px">
+        <div class="card stack">
+            <h2>Aujourd'hui</h2>
+            <p>Tire : <strong>@Model.Summary.PumpedTodayMl ml</strong></p>
+            <p>Bu : <strong>@Model.Summary.ConsumedTodayMl ml</strong></p>
+            <p>Proche expiration : <strong>@Model.Summary.ExpiringSoonMl ml</strong></p>
+        </div>
+        <div class="card stack notice">
+            <h2>Prochain contenant recommande</h2>
+            @if (Model.Summary.NextRecommended is null)
+            {
+                <p>Aucun contenant disponible.</p>
+            }
+            else
+            {
+                <p><span class="pill">@Model.Summary.NextRecommended.RemainingQuantityMl ml</span></p>
+                <p>Expiration estimee : @Model.Summary.NextRecommended.EstimatedExpiresAt.LocalDateTime.ToString("g")</p>
+                <p class="muted">Identifiant : @Model.Summary.NextRecommended.Id.ToString()[..8]</p>
+            }
+        </div>
+    </section>
+}

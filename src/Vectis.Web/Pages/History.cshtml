@@ -1,0 +1,52 @@
+@page
+@model Vectis.Web.Pages.HistoryModel
+@{
+    ViewData["Title"] = "Historique";
+}
+
+<section class="page-head">
+    <div>
+        <h1>Historique</h1>
+        <p>Tirages, consommations et mouvements de stock importants.</p>
+    </div>
+</section>
+
+<section class="grid two">
+    <div class="card">
+        <h2>Tirages</h2>
+        <table>
+            <thead><tr><th>Date</th><th>Quantite</th><th>Notes</th></tr></thead>
+            <tbody>
+            @foreach (var item in Model.PumpingSessions)
+            {
+                <tr><td>@item.PumpedAt.LocalDateTime.ToString("g")</td><td>@item.TotalQuantityMl ml</td><td>@item.Notes</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="card">
+        <h2>Consommations</h2>
+        <table>
+            <thead><tr><th>Date</th><th>Prepare</th><th>Bu</th><th>Reste</th></tr></thead>
+            <tbody>
+            @foreach (var item in Model.Feedings)
+            {
+                <tr><td>@item.StartedAt.LocalDateTime.ToString("g")</td><td>@item.PreparedQuantityMl ml</td><td>@item.ConsumedQuantityMl ml</td><td>@item.LeftoverQuantityMl ml @item.LeftoverOutcome</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="card" style="margin-top:16px">
+    <h2>Audit</h2>
+    <table>
+        <thead><tr><th>Date</th><th>Action</th><th>Entite</th><th>Valeur</th></tr></thead>
+        <tbody>
+        @foreach (var item in Model.AuditEntries)
+        {
+            <tr><td>@item.OccurredAt.LocalDateTime.ToString("g")</td><td>@item.Action</td><td>@item.EntityName</td><td>@item.NewValue</td></tr>
+        }
+        </tbody>
+    </table>
+</section>

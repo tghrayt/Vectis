@@ -1,0 +1,9 @@
+{
+  "name": "Vectis",
+  "short_name": "Vectis",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f766e",
+  "description": "Gestion familiale du lait maternel tire."
+}

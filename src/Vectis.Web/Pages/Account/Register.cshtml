@@ -1,0 +1,31 @@
+@page
+@model Vectis.Web.Pages.Account.RegisterModel
+@{
+    ViewData["Title"] = "Inscription";
+}
+
+<section class="page-head">
+    <div>
+        <h1>Creer votre espace familial</h1>
+        <p>Un compte, une famille et un premier profil bebe pour commencer tout de suite.</p>
+    </div>
+</section>
+
+<form method="post" class="card stack">
+    <div asp-validation-summary="ModelOnly" class="danger"></div>
+    <div class="grid two">
+        <label>Prenom parent <input asp-for="Input.FirstName" /></label>
+        <label>Nom parent <input asp-for="Input.LastName" /></label>
+    </div>
+    <label>Email <input asp-for="Input.Email" type="email" /></label>
+    <label>Mot de passe <input asp-for="Input.Password" type="password" /></label>
+    <div class="grid two">
+        <label>Nom de la famille <input asp-for="Input.FamilyName" /></label>
+        <label>Prenom du bebe <input asp-for="Input.BabyFirstName" /></label>
+    </div>
+    <div class="grid two">
+        <label>Date de naissance <input asp-for="Input.BabyBirthDate" type="date" /></label>
+        <label>Biberon habituel (ml) <input asp-for="Input.UsualBottleMl" type="number" min="1" /></label>
+    </div>
+    <button class="primary" type="submit">Creer le compte</button>
+</form>

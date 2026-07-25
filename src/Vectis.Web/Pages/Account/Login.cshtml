@@ -1,0 +1,20 @@
+@page
+@model Vectis.Web.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "Connexion";
+}
+
+<section class="page-head">
+    <div>
+        <h1>Connexion</h1>
+        <p>Compte demo : <strong>demo@vectis.local</strong> / <strong>Demo123!</strong></p>
+    </div>
+    <a class="button" asp-page="/Account/Register">Creer un compte</a>
+</section>
+
+<form method="post" class="card stack">
+    <div asp-validation-summary="ModelOnly" class="danger"></div>
+    <label>Email <input asp-for="Input.Email" type="email" /></label>
+    <label>Mot de passe <input asp-for="Input.Password" type="password" /></label>
+    <button class="primary" type="submit">Se connecter</button>
+</form>

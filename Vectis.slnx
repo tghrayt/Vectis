@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Vectis.Domain/Vectis.Domain.csproj" />
+    <Project Path="src/Vectis.Web/Vectis.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Vectis.Tests/Vectis.Tests.csproj" />
+  </Folder>
+</Solution>
