@@ -118,6 +118,7 @@ p { color: var(--muted); line-height: 1.6; }
 
 .grid.stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dashboard-grid { align-items: start; }
 
 .card {
   background: var(--panel);
@@ -126,6 +127,35 @@ p { color: var(--muted); line-height: 1.6; }
   box-shadow: var(--shadow);
   padding: 18px;
 }
+
+.dashboard-band {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.status-panel {
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--primary);
+  border-radius: 8px;
+  background: var(--panel);
+  display: grid;
+  gap: 6px;
+  min-height: 112px;
+  padding: 16px;
+}
+
+.status-panel span,
+.status-panel small {
+  color: var(--muted);
+}
+
+.status-panel strong {
+  font-size: 1.35rem;
+}
+
+.status-panel.warning { border-left-color: var(--accent); }
+.status-panel.danger { border-left-color: var(--danger); }
 
 .metric {
   color: var(--muted);
@@ -143,6 +173,23 @@ p { color: var(--muted); line-height: 1.6; }
   flex-wrap: wrap;
   gap: 10px;
 }
+
+.table-actions {
+  flex-wrap: nowrap;
+}
+
+.activity-row {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+}
+
+.activity-row:last-child { border-bottom: 0; }
+
+.activity-row span { color: var(--muted); }
 
 form.stack, .stack {
   display: grid;
@@ -168,9 +215,20 @@ input, select, textarea {
 
 textarea { min-height: 90px; }
 
+.table-wrap {
+  margin-top: 12px;
+  overflow-x: auto;
+  width: 100%;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 640px;
+}
+
+.compact-table {
+  min-width: 520px;
 }
 
 th, td {
@@ -178,6 +236,16 @@ th, td {
   padding: 12px 8px;
   text-align: left;
   vertical-align: top;
+}
+
+th {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 750;
+}
+
+td {
+  overflow-wrap: anywhere;
 }
 
 .pill {
@@ -205,6 +273,7 @@ th, td {
 
 @media (max-width: 860px) {
   .topbar { grid-template-columns: 1fr; }
-  .grid.stats, .grid.two { grid-template-columns: 1fr; }
+  .grid.stats, .grid.two, .dashboard-band { grid-template-columns: 1fr; }
   .page-head { align-items: start; flex-direction: column; }
+  .table-actions { flex-wrap: wrap; }
 }

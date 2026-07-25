@@ -13,19 +13,25 @@
 </section>
 
 <div class="card">
-    <table>
-        <thead><tr><th>ID</th><th>Quantite</th><th>Lieu</th><th>Statut</th><th>Expiration</th></tr></thead>
-        <tbody>
-        @foreach (var item in Model.Containers)
-        {
-            <tr>
-                <td>@item.Id.ToString()[..8]</td>
-                <td><span class="pill">@item.RemainingQuantityMl ml</span></td>
-                <td>@item.Location</td>
-                <td>@item.Status</td>
-                <td>@item.EstimatedExpiresAt.LocalDateTime.ToString("g")</td>
-            </tr>
-        }
-        </tbody>
-    </table>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>ID</th><th>Quantite</th><th>Lieu</th><th>Statut</th><th>Expiration</th></tr></thead>
+            <tbody>
+            @foreach (var item in Model.Containers)
+            {
+                <tr>
+                    <td>@item.Id.ToString()[..8]</td>
+                    <td><span class="pill">@item.RemainingQuantityMl ml</span></td>
+                    <td>@item.Location</td>
+                    <td>@item.Status</td>
+                    <td>@item.EstimatedExpiresAt.LocalDateTime.ToString("g")</td>
+                </tr>
+            }
+            @if (Model.Containers.Count == 0)
+            {
+                <tr><td colspan="5" class="muted">Aucun contenant disponible.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
 </div>
