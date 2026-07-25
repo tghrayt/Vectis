@@ -1,0 +1,74 @@
+@page
+@model Vectis.Web.Pages.UsersModel
+@{
+    ViewData["Title"] = "Utilisateurs";
+}
+
+<section class="page-head">
+    <div>
+        <h1>Utilisateurs</h1>
+        <p>Membres et invitations de la famille.</p>
+    </div>
+</section>
+
+@if (Model.IsAdmin)
+{
+    <form method="post" class="card stack" style="margin-bottom:16px">
+        <div asp-validation-summary="ModelOnly" class="danger"></div>
+        <h2>Inviter une personne</h2>
+        <div class="grid two">
+            <label>Email <input asp-for="Input.Email" type="email" /></label>
+            <label>Role
+                <select asp-for="Input.Role" asp-items="Html.GetEnumSelectList<UserRole>()"></select>
+            </label>
+        </div>
+        <button class="primary" type="submit">Creer l'invitation</button>
+        @if (Model.CreatedInvitationLink is not null)
+        {
+            <p>Lien d'acceptation : <a href="@Model.CreatedInvitationLink">@Model.CreatedInvitationLink</a></p>
+        }
+    </form>
+}
+else
+{
+    <div class="card notice" style="margin-bottom:16px">
+        <p>Tu peux consulter les membres, mais seuls les administrateurs gerent les invitations.</p>
+    </div>
+}
+
+<section class="grid two">
+    <div class="card">
+        <h2>Membres</h2>
+        <table>
+            <thead><tr><th>Nom</th><th>Email</th><th>Role</th><th>Statut</th></tr></thead>
+            <tbody>
+            @foreach (var member in Model.Members)
+            {
+                <tr><td>@member.Name</td><td>@member.Email</td><td>@member.Role</td><td>@member.Status</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="card">
+        <h2>Invitations</h2>
+        <table>
+            <thead><tr><th>Email</th><th>Role</th><th>Statut</th><th>Lien</th></tr></thead>
+            <tbody>
+            @foreach (var invitation in Model.Invitations)
+            {
+                <tr>
+                    <td>@invitation.Email</td>
+                    <td>@invitation.Role</td>
+                    <td>@invitation.Status</td>
+                    <td>
+                        @if (invitation.Status == "pending")
+                        {
+                            <a asp-page="/Invitation" asp-route-id="@invitation.Id">ouvrir</a>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

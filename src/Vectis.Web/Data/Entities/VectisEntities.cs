@@ -30,6 +30,18 @@ public sealed class FamilyMemberEntity
     public string Status { get; set; } = "";
 }
 
+public sealed class FamilyInvitationEntity
+{
+    public Guid Id { get; set; }
+    public Guid FamilyId { get; set; }
+    public string Email { get; set; } = "";
+    public UserRole Role { get; set; }
+    public string Status { get; set; } = "";
+    public Guid InvitedByUserId { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset? AcceptedAt { get; set; }
+}
+
 public sealed class BabyEntity
 {
     public Guid Id { get; set; }

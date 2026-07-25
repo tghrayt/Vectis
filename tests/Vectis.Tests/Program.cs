@@ -15,6 +15,7 @@ internal sealed class BusinessRuleTests
         ExpiredContainerIsNotRecommended();
         FeedingTracksLeftover();
         FamilyAccessIsIsolated();
+        FamilyInvitationFlow();
     }
 
     private void PumpingContainersCannotExceedTotal()
@@ -76,6 +77,52 @@ internal sealed class BusinessRuleTests
         [
             new(ContainerType.StorageBag, 100, StorageLocation.Refrigerator, "")
         ]));
+    }
+
+    private void FamilyInvitationFlow()
+    {
+        var (state, admin, baby) = CreateReadyState();
+        var familyId = baby.FamilyId;
+        var caregiver = _engine.RegisterUser(state, "Second", "Parent", "second@test.local", "hash");
+
+        var invitation = Invite(state, admin.Id, familyId, caregiver.Email, UserRole.Caregiver);
+        Equal("pending", invitation.Status);
+
+        AcceptInvitation(state, invitation.Id, caregiver.Id);
+        Equal(true, state.Members.Any(member => member.UserId == caregiver.Id && member.FamilyId == familyId && member.Role == UserRole.Caregiver && member.Status == "accepted"));
+
+        Throws(() => Invite(state, caregiver.Id, familyId, "third@test.local", UserRole.Caregiver));
+    }
+
+    private static FamilyInvitation Invite(AppState state, Guid adminUserId, Guid familyId, string email, UserRole role)
+    {
+        if (state.Members.All(member => member.UserId != adminUserId || member.FamilyId != familyId || member.Role != UserRole.Admin || member.Status != "accepted"))
+        {
+            throw new InvalidOperationException("Admin requis.");
+        }
+
+        var invitation = new FamilyInvitation(Guid.NewGuid(), familyId, email, role, "pending", adminUserId, DateTimeOffset.UtcNow, null);
+        state.Invitations.Add(invitation);
+        return invitation;
+    }
+
+    private static void AcceptInvitation(AppState state, Guid invitationId, Guid userId)
+    {
+        var user = state.Users.Single(item => item.Id == userId);
+        var index = state.Invitations.FindIndex(invitation => invitation.Id == invitationId && invitation.Status == "pending");
+        if (index < 0)
+        {
+            throw new InvalidOperationException("Invitation introuvable.");
+        }
+
+        var invitation = state.Invitations[index];
+        if (!user.Email.Equals(invitation.Email, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Email incorrect.");
+        }
+
+        state.Members.Add(new FamilyMember(user.Id, invitation.FamilyId, invitation.Role, "accepted"));
+        state.Invitations[index] = invitation with { Status = "accepted", AcceptedAt = DateTimeOffset.UtcNow };
     }
 
     private (AppState State, AppUser User, Baby Baby) CreateReadyState(VectisEngine? engine = null)

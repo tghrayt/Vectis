@@ -5,6 +5,7 @@ public sealed class AppState
     public List<AppUser> Users { get; set; } = [];
     public List<Family> Families { get; set; } = [];
     public List<FamilyMember> Members { get; set; } = [];
+    public List<FamilyInvitation> Invitations { get; set; } = [];
     public List<Baby> Babies { get; set; } = [];
     public List<PumpingSession> PumpingSessions { get; set; } = [];
     public List<MilkContainer> Containers { get; set; } = [];

@@ -11,10 +11,12 @@ namespace Vectis.Web.Pages;
 public sealed class SettingsModel : PageModel
 {
     private readonly SettingsService _settingsService;
+    private readonly CurrentUser _currentUser;
 
-    public SettingsModel(SettingsService settingsService)
+    public SettingsModel(SettingsService settingsService, CurrentUser currentUser)
     {
         _settingsService = settingsService;
+        _currentUser = currentUser;
     }
 
     [BindProperty]
@@ -31,6 +33,14 @@ public sealed class SettingsModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        var context = await _currentUser.GetAsync();
+        if (context?.IsAdmin != true)
+        {
+            ModelState.AddModelError("", "Seul un administrateur peut modifier les regles de conservation.");
+            await OnGetAsync();
+            return Page();
+        }
+
         if (!ModelState.IsValid)
         {
             return Page();

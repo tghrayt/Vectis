@@ -62,6 +62,16 @@ public sealed record AppUser(
 
 public sealed record FamilyMember(Guid UserId, Guid FamilyId, UserRole Role, string Status);
 
+public sealed record FamilyInvitation(
+    Guid Id,
+    Guid FamilyId,
+    string Email,
+    UserRole Role,
+    string Status,
+    Guid InvitedByUserId,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? AcceptedAt);
+
 public sealed record Family(Guid Id, string Name, Guid CreatorUserId, DateTimeOffset CreatedAt);
 
 public sealed record Baby(

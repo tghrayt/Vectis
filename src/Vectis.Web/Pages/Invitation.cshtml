@@ -1,0 +1,37 @@
+@page "{id:guid}"
+@model Vectis.Web.Pages.InvitationModel
+@{
+    ViewData["Title"] = "Invitation";
+}
+
+<section class="page-head">
+    <div>
+        <h1>Invitation famille</h1>
+        <p>Acceptation d'une invitation a rejoindre une famille Vectis.</p>
+    </div>
+</section>
+
+<div class="card stack">
+    @if (Model.Invitation is null)
+    {
+        <p>Invitation introuvable ou deja acceptee.</p>
+    }
+    else
+    {
+        <p>Invitation pour <strong>@Model.Invitation.Email</strong> avec le role <strong>@Model.Invitation.Role</strong>.</p>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <form method="post">
+                <button class="primary" type="submit">Accepter l'invitation</button>
+            </form>
+        }
+        else
+        {
+            <p>Connecte-toi avec cette adresse e-mail, ou cree un compte avec cette adresse, puis reviens sur ce lien.</p>
+            <div class="toolbar">
+                <a class="button primary" asp-page="/Account/Login">Connexion</a>
+                <a class="button" asp-page="/Account/Register">Creer un compte</a>
+            </div>
+        }
+    }
+</div>

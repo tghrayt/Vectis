@@ -12,6 +12,7 @@ public sealed class VectisDbContext : DbContext
     public DbSet<UserEntity> Users => Set<UserEntity>();
     public DbSet<FamilyEntity> Families => Set<FamilyEntity>();
     public DbSet<FamilyMemberEntity> FamilyMembers => Set<FamilyMemberEntity>();
+    public DbSet<FamilyInvitationEntity> FamilyInvitations => Set<FamilyInvitationEntity>();
     public DbSet<BabyEntity> Babies => Set<BabyEntity>();
     public DbSet<PumpingSessionEntity> PumpingSessions => Set<PumpingSessionEntity>();
     public DbSet<MilkContainerEntity> MilkContainers => Set<MilkContainerEntity>();
@@ -46,6 +47,17 @@ public sealed class VectisDbContext : DbContext
             entity.Property(item => item.Role).HasConversion<string>();
             entity.HasOne<UserEntity>().WithMany().HasForeignKey(item => item.UserId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne<FamilyEntity>().WithMany().HasForeignKey(item => item.FamilyId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<FamilyInvitationEntity>(entity =>
+        {
+            entity.ToTable("family_invitations");
+            entity.HasKey(item => item.Id);
+            entity.HasIndex(item => new { item.FamilyId, item.Email, item.Status });
+            entity.Property(item => item.Email).HasMaxLength(320);
+            entity.Property(item => item.Role).HasConversion<string>();
+            entity.HasOne<FamilyEntity>().WithMany().HasForeignKey(item => item.FamilyId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<UserEntity>().WithMany().HasForeignKey(item => item.InvitedByUserId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<BabyEntity>(entity =>
