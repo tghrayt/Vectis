@@ -1,6 +1,7 @@
-using System.Net;
-using System.Net.Mail;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.Extensions.Options;
+using MimeKit;
 
 namespace Vectis.Web.Services;
 
@@ -45,37 +46,46 @@ public sealed class EmailService
             return EmailSendResult.Skipped("Configuration SMTP incomplete. Le lien manuel reste disponible.");
         }
 
-        using var message = new MailMessage
-        {
-            From = new MailAddress(_options.FromEmail, _options.FromName),
-            Subject = subject,
-            Body = body,
-            IsBodyHtml = false
-        };
-        message.To.Add(toEmail);
-
-        using var client = new SmtpClient(_options.Host, _options.Port)
-        {
-            DeliveryMethod = SmtpDeliveryMethod.Network,
-            EnableSsl = _options.EnableSsl,
-            UseDefaultCredentials = false
-        };
-
-        if (!string.IsNullOrWhiteSpace(_options.UserName))
-        {
-            client.Credentials = new NetworkCredential(_options.UserName, _options.Password);
-        }
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress(_options.FromName, _options.FromEmail));
+        message.To.Add(MailboxAddress.Parse(toEmail));
+        message.Subject = subject;
+        message.Body = new TextPart("plain") { Text = body };
 
         try
         {
-            await client.SendMailAsync(message);
+            using var client = new SmtpClient();
+            var secureSocketOptions = _options.EnableSsl
+                ? SecureSocketOptions.StartTls
+                : SecureSocketOptions.None;
+
+            await client.ConnectAsync(_options.Host, _options.Port, secureSocketOptions);
+
+            if (!string.IsNullOrWhiteSpace(_options.UserName))
+            {
+                await client.AuthenticateAsync(_options.UserName, _options.Password);
+            }
+
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
             return EmailSendResult.Success();
         }
-        catch (SmtpException ex)
+        catch (MailKit.CommandException ex)
         {
             _logger.LogWarning(ex, "Invitation email delivery failed for {Email}", toEmail);
             var detail = string.IsNullOrWhiteSpace(ex.Message) ? "Erreur SMTP inconnue." : ex.Message;
             return new EmailSendResult(false, $"L'e-mail n'a pas pu etre envoye ({detail}). Le lien manuel reste disponible.");
+        }
+        catch (MailKit.ProtocolException ex)
+        {
+            _logger.LogWarning(ex, "Invitation email delivery failed for {Email}", toEmail);
+            var detail = string.IsNullOrWhiteSpace(ex.Message) ? "Erreur SMTP inconnue." : ex.Message;
+            return new EmailSendResult(false, $"L'e-mail n'a pas pu etre envoye ({detail}). Le lien manuel reste disponible.");
+        }
+        catch (MailKit.Security.AuthenticationException ex)
+        {
+            _logger.LogWarning(ex, "Invitation email authentication failed for {Email}", toEmail);
+            return new EmailSendResult(false, "L'authentification SMTP a echoue. Verifie le login SMTP et la cle SMTP Brevo.");
         }
         catch (Exception ex)
         {
