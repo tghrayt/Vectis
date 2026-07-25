@@ -75,9 +75,19 @@ public sealed class EfAppStore : IAppStore
             StockMovements = await db.StockMovements.AsNoTracking().Select(item => new StockMovement(item.Id, item.ContainerId, item.PreviousLocation, item.NewLocation, item.PreviousStatus, item.NewStatus, item.OccurredAt, item.UserId, item.Comment)).ToListAsync(),
             PreparedBottles = await LoadPreparedBottlesAsync(db),
             Feedings = await db.Feedings.AsNoTracking().Select(item => new Feeding(item.Id, item.BabyId, item.PreparedBottleId, item.StartedAt, item.EndedAt, item.PreparedQuantityMl, item.ConsumedQuantityMl, item.LeftoverQuantityMl, item.MilkType, item.Reaction, item.FedByUserId, item.LeftoverOutcome, item.Notes)).ToListAsync(),
-            ConservationRules = await db.ConservationRules.AsNoTracking().Select(item => new ConservationRule(item.Location, item.DurationHours, item.IsActive, item.UpdatedAt)).ToListAsync(),
+            ConservationRules = await LoadConservationRulesAsync(db),
             AuditEntries = await db.AuditEntries.AsNoTracking().Select(item => new AuditEntry(item.Id, item.UserId, item.Action, item.EntityName, item.EntityId, item.OldValue, item.NewValue, item.OccurredAt)).ToListAsync()
         };
+    }
+
+    private static async Task<List<ConservationRule>> LoadConservationRulesAsync(VectisDbContext db)
+    {
+        var rules = await db.ConservationRules
+            .AsNoTracking()
+            .Select(item => new ConservationRule(item.Location, item.DurationHours, item.IsActive, item.UpdatedAt))
+            .ToListAsync();
+
+        return rules.Count == 0 ? DefaultConservationRules.Create() : rules;
     }
 
     private static async Task<List<PreparedBottle>> LoadPreparedBottlesAsync(VectisDbContext db)
