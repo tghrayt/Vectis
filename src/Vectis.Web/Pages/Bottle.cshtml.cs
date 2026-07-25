@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Vectis.Domain;
 using Vectis.Web.Services;
 
@@ -22,6 +23,9 @@ public sealed class BottleModel : PageModel
     }
 
     public IReadOnlyList<MilkContainer> Containers { get; private set; } = [];
+    public IReadOnlyList<SelectListItem> ReactionOptions { get; } = Enum.GetValues<FeedingReaction>()
+        .Select(reaction => new SelectListItem(DisplayLabels.FeedingReaction(reaction), reaction.ToString()))
+        .ToList();
 
     [BindProperty]
     public BottleInput Input { get; set; } = new();
@@ -38,9 +42,10 @@ public sealed class BottleModel : PageModel
         if (Containers.Count > 1)
         {
             Input.Container2Id = Containers[1].Id;
-            Input.Container2Ml = 60;
+            Input.Container2Ml = Math.Min(60, Containers[1].RemainingQuantityMl);
         }
-        Input.ConsumedMl = 90;
+
+        Input.ConsumedMl = Input.Container1Ml + Input.Container2Ml;
         return Page();
     }
 

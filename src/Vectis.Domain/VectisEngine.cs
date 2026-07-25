@@ -118,7 +118,12 @@ public sealed class VectisEngine
             throw new InvalidOperationException("Selectionne au moins un contenant.");
         }
 
-        foreach (var source in sources)
+        var requestedByContainer = sources
+            .GroupBy(source => source.ContainerId)
+            .Select(group => new PreparedBottleSource(group.Key, group.Sum(source => source.QuantityMl)))
+            .ToList();
+
+        foreach (var source in requestedByContainer)
         {
             var container = RequireContainer(state, source.ContainerId);
             if (container.BabyId != babyId || !IsAvailable(container) || container.EstimatedExpiresAt <= Now())

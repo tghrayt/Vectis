@@ -13,6 +13,7 @@ internal sealed class BusinessRuleTests
     {
         PumpingContainersCannotExceedTotal();
         PreparingBottleDecreasesStockAndKeepsTraceability();
+        PreparingBottleCannotOverdrawSameContainerTwice();
         ExpiredContainerIsNotRecommended();
         FeedingTracksLeftover();
         FamilyAccessIsIsolated();
@@ -52,6 +53,22 @@ internal sealed class BusinessRuleTests
         Equal(2, bottle.Sources.Count);
         Equal(40, state.Containers.First(container => container.Id == available[0].Id).RemainingQuantityMl);
         Equal(20, state.Containers.First(container => container.Id == available[1].Id).RemainingQuantityMl);
+    }
+
+    private void PreparingBottleCannotOverdrawSameContainerTwice()
+    {
+        var (state, user, baby) = CreateReadyState();
+        _engine.AddPumpingSession(state, user.Id, baby.Id, DateTimeOffset.UtcNow, 100, null, "both", "",
+        [
+            new(ContainerType.StorageBag, 100, StorageLocation.Refrigerator, "")
+        ]);
+
+        var available = _engine.AvailableContainers(state, baby.Id);
+        Throws(() => _engine.PrepareBottle(state, user.Id, baby.Id,
+        [
+            new(available[0].Id, 60),
+            new(available[0].Id, 60)
+        ], ""));
     }
 
     private void ExpiredContainerIsNotRecommended()

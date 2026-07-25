@@ -35,4 +35,20 @@ public static class DisplayLabels
             _ => status.ToString()
         };
     }
+
+    public static string FeedingReaction(FeedingReaction reaction)
+    {
+        return reaction switch
+        {
+            Domain.FeedingReaction.Finished => "Termine",
+            Domain.FeedingReaction.Normal => "Normal",
+            Domain.FeedingReaction.Slow => "Lent",
+            Domain.FeedingReaction.Refused => "Refuse",
+            Domain.FeedingReaction.Reflux => "Reflux",
+            Domain.FeedingReaction.Vomiting => "Vomissement",
+            Domain.FeedingReaction.Discomfort => "Inconfort",
+            Domain.FeedingReaction.Other => "Autre",
+            _ => reaction.ToString()
+        };
+    }
 }
