@@ -18,6 +18,12 @@ builder.Services.AddDbContextFactory<VectisDbContext>(options =>
     options.UseNpgsql(connectionString);
 });
 builder.Services.AddSingleton<IAppStore, EfAppStore>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<PumpingService>();
+builder.Services.AddScoped<StockService>();
+builder.Services.AddScoped<BottleService>();
+builder.Services.AddScoped<HistoryService>();
+builder.Services.AddScoped<SettingsService>();
 builder.Services.AddScoped<CurrentUser>();
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

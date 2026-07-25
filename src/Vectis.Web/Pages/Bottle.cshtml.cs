@@ -11,14 +11,14 @@ namespace Vectis.Web.Pages;
 public sealed class BottleModel : PageModel
 {
     private readonly CurrentUser _currentUser;
-    private readonly IAppStore _store;
-    private readonly VectisEngine _engine;
+    private readonly StockService _stockService;
+    private readonly BottleService _bottleService;
 
-    public BottleModel(CurrentUser currentUser, IAppStore store, VectisEngine engine)
+    public BottleModel(CurrentUser currentUser, StockService stockService, BottleService bottleService)
     {
         _currentUser = currentUser;
-        _store = store;
-        _engine = engine;
+        _stockService = stockService;
+        _bottleService = bottleService;
     }
 
     public IReadOnlyList<MilkContainer> Containers { get; private set; } = [];
@@ -60,21 +60,17 @@ public sealed class BottleModel : PageModel
 
         try
         {
-            await _store.MutateAsync(state =>
+            var sources = new List<PreparedBottleSource>();
+            if (Input.Container1Id != Guid.Empty && Input.Container1Ml > 0)
             {
-                var sources = new List<PreparedBottleSource>();
-                if (Input.Container1Id != Guid.Empty && Input.Container1Ml > 0)
-                {
-                    sources.Add(new PreparedBottleSource(Input.Container1Id, Input.Container1Ml));
-                }
-                if (Input.Container2Id.HasValue && Input.Container2Id.Value != Guid.Empty && Input.Container2Ml > 0)
-                {
-                    sources.Add(new PreparedBottleSource(Input.Container2Id.Value, Input.Container2Ml));
-                }
+                sources.Add(new PreparedBottleSource(Input.Container1Id, Input.Container1Ml));
+            }
+            if (Input.Container2Id.HasValue && Input.Container2Id.Value != Guid.Empty && Input.Container2Ml > 0)
+            {
+                sources.Add(new PreparedBottleSource(Input.Container2Id.Value, Input.Container2Ml));
+            }
 
-                var bottle = _engine.PrepareBottle(state, context.User.Id, context.Baby.Id, sources, Input.Notes);
-                _engine.RecordFeeding(state, context.User.Id, context.Baby.Id, bottle.Id, bottle.TotalQuantityMl, Input.ConsumedMl, Input.Reaction, Input.LeftoverOutcome, Input.Notes);
-            });
+            await _bottleService.PrepareAndFeedAsync(new PrepareAndFeedCommand(context.User.Id, context.Baby.Id, sources, Input.ConsumedMl, Input.Reaction, Input.LeftoverOutcome, Input.Notes));
             return RedirectToPage("/History");
         }
         catch (InvalidOperationException ex)
@@ -94,8 +90,7 @@ public sealed class BottleModel : PageModel
             return;
         }
 
-        var state = await _store.LoadAsync();
-        Containers = _engine.AvailableContainers(state, context.Baby.Id);
+        Containers = await _stockService.GetAvailableContainersAsync(context.Baby.Id);
     }
 
     public sealed class BottleInput

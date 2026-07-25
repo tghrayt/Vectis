@@ -10,12 +10,12 @@ namespace Vectis.Web.Pages;
 public sealed class HistoryModel : PageModel
 {
     private readonly CurrentUser _currentUser;
-    private readonly IAppStore _store;
+    private readonly HistoryService _historyService;
 
-    public HistoryModel(CurrentUser currentUser, IAppStore store)
+    public HistoryModel(CurrentUser currentUser, HistoryService historyService)
     {
         _currentUser = currentUser;
-        _store = store;
+        _historyService = historyService;
     }
 
     public IReadOnlyList<PumpingSession> PumpingSessions { get; private set; } = [];
@@ -30,10 +30,10 @@ public sealed class HistoryModel : PageModel
             return RedirectToPage("/Account/Login");
         }
 
-        var state = await _store.LoadAsync();
-        PumpingSessions = state.PumpingSessions.Where(item => item.BabyId == context.Baby.Id).OrderByDescending(item => item.PumpedAt).ToList();
-        Feedings = state.Feedings.Where(item => item.BabyId == context.Baby.Id).OrderByDescending(item => item.StartedAt).ToList();
-        AuditEntries = state.AuditEntries.OrderByDescending(item => item.OccurredAt).Take(30).ToList();
+        var history = await _historyService.GetAsync(context.Baby.Id);
+        PumpingSessions = history.PumpingSessions;
+        Feedings = history.Feedings;
+        AuditEntries = history.AuditEntries;
         return Page();
     }
 }

@@ -11,14 +11,12 @@ namespace Vectis.Web.Pages;
 public sealed class PumpingModel : PageModel
 {
     private readonly CurrentUser _currentUser;
-    private readonly IAppStore _store;
-    private readonly VectisEngine _engine;
+    private readonly PumpingService _pumpingService;
 
-    public PumpingModel(CurrentUser currentUser, IAppStore store, VectisEngine engine)
+    public PumpingModel(CurrentUser currentUser, PumpingService pumpingService)
     {
         _currentUser = currentUser;
-        _store = store;
-        _engine = engine;
+        _pumpingService = pumpingService;
     }
 
     [BindProperty]
@@ -44,16 +42,13 @@ public sealed class PumpingModel : PageModel
 
         try
         {
-            await _store.MutateAsync(state =>
+            var drafts = new List<ContainerDraft> { new(ContainerType.StorageBag, Input.Container1Ml, Input.Location1, "") };
+            if (Input.Container2Ml > 0)
             {
-                var drafts = new List<ContainerDraft> { new(ContainerType.StorageBag, Input.Container1Ml, Input.Location1, "") };
-                if (Input.Container2Ml > 0)
-                {
-                    drafts.Add(new ContainerDraft(ContainerType.StorageBag, Input.Container2Ml, Input.Location2, ""));
-                }
+                drafts.Add(new ContainerDraft(ContainerType.StorageBag, Input.Container2Ml, Input.Location2, ""));
+            }
 
-                _engine.AddPumpingSession(state, context.User.Id, context.Baby.Id, new DateTimeOffset(Input.PumpedAt).ToUniversalTime(), Input.TotalMl, Input.DurationMinutes, Input.Side, Input.Notes, drafts);
-            });
+            await _pumpingService.AddAsync(new AddPumpingCommand(context.User.Id, context.Baby.Id, Input.PumpedAt, Input.TotalMl, Input.DurationMinutes, Input.Side, Input.Notes, drafts));
             return RedirectToPage("/Stock");
         }
         catch (InvalidOperationException ex)

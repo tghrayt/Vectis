@@ -10,14 +10,12 @@ namespace Vectis.Web.Pages;
 public sealed class IndexModel : PageModel
 {
     private readonly CurrentUser _currentUser;
-    private readonly IAppStore _store;
-    private readonly VectisEngine _engine;
+    private readonly StockService _stockService;
 
-    public IndexModel(CurrentUser currentUser, IAppStore store, VectisEngine engine)
+    public IndexModel(CurrentUser currentUser, StockService stockService)
     {
         _currentUser = currentUser;
-        _store = store;
-        _engine = engine;
+        _stockService = stockService;
     }
 
     public StockSummary? Summary { get; private set; }
@@ -32,8 +30,7 @@ public sealed class IndexModel : PageModel
         }
 
         BabyName = context.Baby.FirstName;
-        var state = await _store.LoadAsync();
-        Summary = _engine.BuildStockSummary(state, context.Baby.Id);
+        Summary = await _stockService.GetSummaryAsync(context.Baby.Id);
         return Page();
     }
 }

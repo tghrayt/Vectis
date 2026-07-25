@@ -10,11 +10,11 @@ namespace Vectis.Web.Pages;
 [Authorize]
 public sealed class SettingsModel : PageModel
 {
-    private readonly IAppStore _store;
+    private readonly SettingsService _settingsService;
 
-    public SettingsModel(IAppStore store)
+    public SettingsModel(SettingsService settingsService)
     {
-        _store = store;
+        _settingsService = settingsService;
     }
 
     [BindProperty]
@@ -22,8 +22,8 @@ public sealed class SettingsModel : PageModel
 
     public async Task OnGetAsync()
     {
-        var state = await _store.LoadAsync();
-        Input.Rules = state.ConservationRules
+        var rules = await _settingsService.GetConservationRulesAsync();
+        Input.Rules = rules
             .OrderBy(rule => rule.Location.ToString())
             .Select(rule => new RuleInput { Location = rule.Location, DurationHours = rule.DurationHours })
             .ToList();
@@ -36,13 +36,10 @@ public sealed class SettingsModel : PageModel
             return Page();
         }
 
-        await _store.MutateAsync(state =>
-        {
-            var now = DateTimeOffset.UtcNow;
-            state.ConservationRules = Input.Rules
-                .Select(rule => new ConservationRule(rule.Location, rule.DurationHours, true, now))
-                .ToList();
-        });
+        var now = DateTimeOffset.UtcNow;
+        await _settingsService.SaveConservationRulesAsync(Input.Rules
+            .Select(rule => new ConservationRule(rule.Location, rule.DurationHours, true, now))
+            .ToList());
 
         return RedirectToPage("/Settings");
     }

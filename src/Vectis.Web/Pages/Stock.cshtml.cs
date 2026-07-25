@@ -10,14 +10,12 @@ namespace Vectis.Web.Pages;
 public sealed class StockModel : PageModel
 {
     private readonly CurrentUser _currentUser;
-    private readonly IAppStore _store;
-    private readonly VectisEngine _engine;
+    private readonly StockService _stockService;
 
-    public StockModel(CurrentUser currentUser, IAppStore store, VectisEngine engine)
+    public StockModel(CurrentUser currentUser, StockService stockService)
     {
         _currentUser = currentUser;
-        _store = store;
-        _engine = engine;
+        _stockService = stockService;
     }
 
     public IReadOnlyList<MilkContainer> Containers { get; private set; } = [];
@@ -30,8 +28,7 @@ public sealed class StockModel : PageModel
             return RedirectToPage("/Account/Login");
         }
 
-        var state = await _store.LoadAsync();
-        Containers = _engine.AvailableContainers(state, context.Baby.Id);
+        Containers = await _stockService.GetAvailableContainersAsync(context.Baby.Id);
         return Page();
     }
 }

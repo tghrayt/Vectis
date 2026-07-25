@@ -11,13 +11,11 @@ namespace Vectis.Web.Pages.Account;
 
 public sealed class LoginModel : PageModel
 {
-    private readonly IAppStore _store;
-    private readonly PasswordHasher _hasher;
+    private readonly AuthService _authService;
 
-    public LoginModel(IAppStore store, PasswordHasher hasher)
+    public LoginModel(AuthService authService)
     {
-        _store = store;
-        _hasher = hasher;
+        _authService = authService;
     }
 
     [BindProperty]
@@ -30,9 +28,8 @@ public sealed class LoginModel : PageModel
             return Page();
         }
 
-        var state = await _store.LoadAsync();
-        var user = state.Users.FirstOrDefault(user => user.Email.Equals(Input.Email.Trim(), StringComparison.OrdinalIgnoreCase));
-        if (user is null || !_hasher.Verify(Input.Password, user.PasswordHash))
+        var user = await _authService.ValidateCredentialsAsync(Input.Email, Input.Password);
+        if (user is null)
         {
             ModelState.AddModelError("", "Identifiants invalides.");
             return Page();

@@ -11,15 +11,11 @@ namespace Vectis.Web.Pages.Account;
 
 public sealed class RegisterModel : PageModel
 {
-    private readonly IAppStore _store;
-    private readonly VectisEngine _engine;
-    private readonly PasswordHasher _hasher;
+    private readonly AuthService _authService;
 
-    public RegisterModel(IAppStore store, VectisEngine engine, PasswordHasher hasher)
+    public RegisterModel(AuthService authService)
     {
-        _store = store;
-        _engine = engine;
-        _hasher = hasher;
+        _authService = authService;
     }
 
     [BindProperty]
@@ -34,13 +30,7 @@ public sealed class RegisterModel : PageModel
 
         try
         {
-            var user = await _store.MutateAsync(state =>
-            {
-                var created = _engine.RegisterUser(state, Input.FirstName, Input.LastName, Input.Email, _hasher.Hash(Input.Password));
-                var family = _engine.CreateFamily(state, created.Id, Input.FamilyName);
-                _engine.CreateBaby(state, created.Id, family.Id, Input.BabyFirstName, DateOnly.FromDateTime(Input.BabyBirthDate), Input.UsualBottleMl, "");
-                return created;
-            });
+            var user = await _authService.RegisterFamilyAsync(new RegisterFamilyCommand(Input.FirstName, Input.LastName, Input.Email, Input.Password, Input.FamilyName, Input.BabyFirstName, Input.BabyBirthDate, Input.UsualBottleMl));
 
             await SignInAsync(user);
             return RedirectToPage("/Index");
