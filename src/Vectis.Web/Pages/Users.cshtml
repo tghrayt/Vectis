@@ -27,6 +27,10 @@
         {
             <p>Lien d'acceptation : <a href="@Model.CreatedInvitationLink">@Model.CreatedInvitationLink</a></p>
         }
+        @if (Model.EmailStatusMessage is not null)
+        {
+            <p class="muted">@Model.EmailStatusMessage</p>
+        }
     </form>
 }
 else
@@ -52,7 +56,7 @@ else
     <div class="card">
         <h2>Invitations</h2>
         <table>
-            <thead><tr><th>Email</th><th>Role</th><th>Statut</th><th>Lien</th></tr></thead>
+            <thead><tr><th>Email</th><th>Role</th><th>Statut</th><th>Actions</th></tr></thead>
             <tbody>
             @foreach (var invitation in Model.Invitations)
             {
@@ -63,7 +67,15 @@ else
                     <td>
                         @if (invitation.Status == "pending")
                         {
-                            <a asp-page="/Invitation" asp-route-id="@invitation.Id">ouvrir</a>
+                            <div class="toolbar">
+                                <a class="button" asp-page="/Invitation" asp-route-id="@invitation.Id">ouvrir</a>
+                                @if (Model.IsAdmin)
+                                {
+                                    <form method="post" asp-page-handler="Resend" asp-route-invitationId="@invitation.Id">
+                                        <button type="submit">Renvoyer</button>
+                                    </form>
+                                }
+                            </div>
                         }
                     </td>
                 </tr>

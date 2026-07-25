@@ -167,6 +167,34 @@ dotnet tool run dotnet-ef migrations add NomDeMigration --project src/Vectis.Web
 
 Les regles de conservation sont modifiables dans l'ecran `Regles`.
 
+## Invitations par e-mail
+
+Les invitations famille creent toujours un lien manuel dans l'application. Si SMTP est configure, Vectis envoie aussi un e-mail d'invitation.
+
+Configuration de developpement dans `src/Vectis.Web/appsettings.Development.json` :
+
+```json
+"Smtp": {
+  "Enabled": true,
+  "Host": "smtp.example.com",
+  "Port": 587,
+  "UserName": "apikey-or-user",
+  "Password": "secret",
+  "FromEmail": "noreply@example.com",
+  "FromName": "Vectis",
+  "EnableSsl": true
+}
+```
+
+Ne commit jamais de vrais secrets SMTP. Pour une configuration locale privee, utilise les variables d'environnement ou les user secrets .NET :
+
+```powershell
+dotnet user-secrets init --project src/Vectis.Web
+dotnet user-secrets set "Smtp:Enabled" "true" --project src/Vectis.Web
+dotnet user-secrets set "Smtp:Host" "smtp.example.com" --project src/Vectis.Web
+dotnet user-secrets set "Smtp:Password" "secret" --project src/Vectis.Web
+```
+
 ## Limites actuelles
 
 - Pas encore de notification mobile push.

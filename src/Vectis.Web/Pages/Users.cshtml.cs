@@ -12,11 +12,13 @@ public sealed class UsersModel : PageModel
 {
     private readonly CurrentUser _currentUser;
     private readonly FamilyService _familyService;
+    private readonly InvitationEmailService _invitationEmailService;
 
-    public UsersModel(CurrentUser currentUser, FamilyService familyService)
+    public UsersModel(CurrentUser currentUser, FamilyService familyService, InvitationEmailService invitationEmailService)
     {
         _currentUser = currentUser;
         _familyService = familyService;
+        _invitationEmailService = invitationEmailService;
     }
 
     [BindProperty]
@@ -26,6 +28,7 @@ public sealed class UsersModel : PageModel
     public IReadOnlyList<FamilyInvitationView> Invitations { get; private set; } = [];
     public bool IsAdmin { get; private set; }
     public string? CreatedInvitationLink { get; private set; }
+    public string? EmailStatusMessage { get; private set; }
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -57,6 +60,8 @@ public sealed class UsersModel : PageModel
         {
             var invitation = await _familyService.InviteAsync(context.Family.Id, context.User.Id, Input.Email, Input.Role);
             CreatedInvitationLink = Url.Page("/Invitation", null, new { id = invitation.Id }, Request.Scheme);
+            var emailResult = await _invitationEmailService.SendInvitationAsync(invitation, context.Family.Name, CreatedInvitationLink!);
+            EmailStatusMessage = emailResult.Message;
             await LoadAsync(context);
             return Page();
         }
@@ -66,6 +71,36 @@ public sealed class UsersModel : PageModel
             await LoadAsync(context);
             return Page();
         }
+    }
+
+    public async Task<IActionResult> OnPostResendAsync(Guid invitationId)
+    {
+        var context = await _currentUser.GetAsync();
+        if (context?.Family is null)
+        {
+            return RedirectToPage("/Account/Login");
+        }
+
+        if (!context.IsAdmin)
+        {
+            ModelState.AddModelError("", "Seul un administrateur peut renvoyer une invitation.");
+            await LoadAsync(context);
+            return Page();
+        }
+
+        var invitation = await _familyService.GetPendingInvitationAsync(invitationId);
+        if (invitation is null || invitation.FamilyId != context.Family.Id)
+        {
+            ModelState.AddModelError("", "Invitation introuvable ou deja acceptee.");
+            await LoadAsync(context);
+            return Page();
+        }
+
+        CreatedInvitationLink = Url.Page("/Invitation", null, new { id = invitation.Id }, Request.Scheme);
+        var emailResult = await _invitationEmailService.SendInvitationAsync(invitation, context.Family.Name, CreatedInvitationLink!);
+        EmailStatusMessage = emailResult.Message;
+        await LoadAsync(context);
+        return Page();
     }
 
     private async Task LoadAsync(CurrentContext context)

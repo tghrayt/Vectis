@@ -11,6 +11,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<VectisEngine>();
 builder.Services.AddSingleton<PasswordHasher>();
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 builder.Services.AddDbContextFactory<VectisDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("Vectis")
@@ -25,6 +26,8 @@ builder.Services.AddScoped<BottleService>();
 builder.Services.AddScoped<HistoryService>();
 builder.Services.AddScoped<SettingsService>();
 builder.Services.AddScoped<FamilyService>();
+builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<InvitationEmailService>();
 builder.Services.AddScoped<CurrentUser>();
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
