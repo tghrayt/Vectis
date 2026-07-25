@@ -20,7 +20,7 @@
         {
             <tr>
                 <td>
-                    @Model.Input.Rules[i].Location
+                    @DisplayLabels.Location(Model.Input.Rules[i].Location)
                     <input type="hidden" asp-for="Input.Rules[i].Location" />
                 </td>
                 <td><input asp-for="Input.Rules[i].DurationHours" type="number" min="1" /></td>

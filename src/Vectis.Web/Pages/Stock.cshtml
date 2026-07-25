@@ -22,8 +22,8 @@
                 <tr>
                     <td>@item.Id.ToString()[..8]</td>
                     <td><span class="pill">@item.RemainingQuantityMl ml</span></td>
-                    <td>@StockModel.LocationLabel(item.Location)</td>
-                    <td>@StockModel.StatusLabel(item.Status)</td>
+                    <td>@DisplayLabels.Location(item.Location)</td>
+                    <td>@DisplayLabels.MilkStatus(item.Status)</td>
                     <td>@item.EstimatedExpiresAt.LocalDateTime.ToString("g")</td>
                 </tr>
             }

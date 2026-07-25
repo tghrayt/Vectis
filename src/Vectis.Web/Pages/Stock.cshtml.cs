@@ -31,36 +31,4 @@ public sealed class StockModel : PageModel
         Containers = await _stockService.GetAvailableContainersAsync(context.User.Id, context.Baby.Id);
         return Page();
     }
-
-    public static string LocationLabel(StorageLocation location)
-    {
-        return location switch
-        {
-            StorageLocation.RoomTemperature => "Temperature ambiante",
-            StorageLocation.Refrigerator => "Refrigerateur",
-            StorageLocation.FridgeFreezerCompartment => "Compartiment congelateur",
-            StorageLocation.SeparateFreezer => "Congelateur separe",
-            StorageLocation.CoolerBag => "Sac isotherme",
-            StorageLocation.Other => "Autre",
-            _ => location.ToString()
-        };
-    }
-
-    public static string StatusLabel(MilkStatus status)
-    {
-        return status switch
-        {
-            MilkStatus.FreshlyPumped => "Fraichement tire",
-            MilkStatus.Refrigerated => "Refrigere",
-            MilkStatus.Frozen => "Congele",
-            MilkStatus.Thawing => "En decongelation",
-            MilkStatus.Thawed => "Decongele",
-            MilkStatus.ReadyToFeed => "Pret a donner",
-            MilkStatus.PartiallyConsumed => "Partiellement consomme",
-            MilkStatus.Consumed => "Consomme",
-            MilkStatus.Discarded => "Jete",
-            MilkStatus.Expired => "Expire",
-            _ => status.ToString()
-        };
-    }
 }
