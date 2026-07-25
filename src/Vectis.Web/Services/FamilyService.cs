@@ -76,6 +76,28 @@ public sealed class FamilyService
         return state.Invitations.FirstOrDefault(invitation => invitation.Id == invitationId && invitation.Status == "pending");
     }
 
+    public Task CancelInvitationAsync(Guid familyId, Guid adminUserId, Guid invitationId)
+    {
+        return _store.MutateAsync(state =>
+        {
+            EnsureFamilyAdmin(state, adminUserId, familyId);
+
+            var invitationIndex = state.Invitations.FindIndex(invitation =>
+                invitation.Id == invitationId &&
+                invitation.FamilyId == familyId &&
+                invitation.Status == "pending");
+
+            if (invitationIndex < 0)
+            {
+                throw new InvalidOperationException("Invitation introuvable ou deja traitee.");
+            }
+
+            var invitation = state.Invitations[invitationIndex];
+            state.Invitations[invitationIndex] = invitation with { Status = "cancelled" };
+            state.AuditEntries.Add(new AuditEntry(Guid.NewGuid(), adminUserId, "cancel_invitation", nameof(FamilyInvitation), invitation.Id, "pending", "cancelled", DateTimeOffset.UtcNow));
+        });
+    }
+
     public Task AcceptInvitationAsync(Guid invitationId, Guid userId)
     {
         return _store.MutateAsync(state =>

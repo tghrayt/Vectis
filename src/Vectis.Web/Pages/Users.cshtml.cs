@@ -29,6 +29,7 @@ public sealed class UsersModel : PageModel
     public bool IsAdmin { get; private set; }
     public string? CreatedInvitationLink { get; private set; }
     public string? EmailStatusMessage { get; private set; }
+    public string? ActionStatusMessage { get; private set; }
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -103,12 +104,50 @@ public sealed class UsersModel : PageModel
         return Page();
     }
 
+    public async Task<IActionResult> OnPostCancelAsync(Guid invitationId)
+    {
+        var context = await _currentUser.GetAsync();
+        if (context?.Family is null)
+        {
+            return RedirectToPage("/Account/Login");
+        }
+
+        try
+        {
+            await _familyService.CancelInvitationAsync(context.Family.Id, context.User.Id, invitationId);
+            ActionStatusMessage = "Invitation annulee.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            ModelState.AddModelError("", ex.Message);
+        }
+
+        await LoadAsync(context);
+        return Page();
+    }
+
     private async Task LoadAsync(CurrentContext context)
     {
         IsAdmin = context.IsAdmin;
         var snapshot = await _familyService.GetUsersAsync(context.Family!.Id, context.User.Id);
         Members = snapshot.Members;
         Invitations = snapshot.Invitations;
+    }
+
+    public static string RoleLabel(UserRole role)
+    {
+        return role == UserRole.Admin ? "Administrateur" : "Accompagnant";
+    }
+
+    public static string StatusLabel(string status)
+    {
+        return status switch
+        {
+            "accepted" => "Acceptee",
+            "pending" => "En attente",
+            "cancelled" => "Annulee",
+            _ => status
+        };
     }
 
     public sealed class InviteInput

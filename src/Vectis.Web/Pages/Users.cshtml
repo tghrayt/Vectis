@@ -31,6 +31,10 @@
         {
             <p class="muted">@Model.EmailStatusMessage</p>
         }
+        @if (Model.ActionStatusMessage is not null)
+        {
+            <p class="muted">@Model.ActionStatusMessage</p>
+        }
     </form>
 }
 else
@@ -48,7 +52,12 @@ else
             <tbody>
             @foreach (var member in Model.Members)
             {
-                <tr><td>@member.Name</td><td>@member.Email</td><td>@member.Role</td><td>@member.Status</td></tr>
+                <tr>
+                    <td>@member.Name</td>
+                    <td>@member.Email</td>
+                    <td>@UsersModel.RoleLabel(member.Role)</td>
+                    <td><span class="pill">@UsersModel.StatusLabel(member.Status)</span></td>
+                </tr>
             }
             </tbody>
         </table>
@@ -56,14 +65,15 @@ else
     <div class="card">
         <h2>Invitations</h2>
         <table>
-            <thead><tr><th>Email</th><th>Role</th><th>Statut</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Email</th><th>Role</th><th>Statut</th><th>Date</th><th>Actions</th></tr></thead>
             <tbody>
             @foreach (var invitation in Model.Invitations)
             {
                 <tr>
                     <td>@invitation.Email</td>
-                    <td>@invitation.Role</td>
-                    <td>@invitation.Status</td>
+                    <td>@UsersModel.RoleLabel(invitation.Role)</td>
+                    <td><span class="pill status-@invitation.Status">@UsersModel.StatusLabel(invitation.Status)</span></td>
+                    <td>@invitation.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
                     <td>
                         @if (invitation.Status == "pending")
                         {
@@ -74,11 +84,22 @@ else
                                     <form method="post" asp-page-handler="Resend" asp-route-invitationId="@invitation.Id">
                                         <button type="submit">Renvoyer</button>
                                     </form>
+                                    <form method="post" asp-page-handler="Cancel" asp-route-invitationId="@invitation.Id">
+                                        <button class="danger-button" type="submit">Annuler</button>
+                                    </form>
                                 }
                             </div>
                         }
+                        else if (invitation.AcceptedAt is not null)
+                        {
+                            <span class="muted">@invitation.AcceptedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                        }
                     </td>
                 </tr>
+            }
+            @if (Model.Invitations.Count == 0)
+            {
+                <tr><td colspan="5" class="muted">Aucune invitation pour le moment.</td></tr>
             }
             </tbody>
         </table>

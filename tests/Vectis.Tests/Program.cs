@@ -16,6 +16,7 @@ internal sealed class BusinessRuleTests
         FeedingTracksLeftover();
         FamilyAccessIsIsolated();
         FamilyInvitationFlow();
+        CancelledInvitationCannotBeAccepted();
     }
 
     private void PumpingContainersCannotExceedTotal()
@@ -94,6 +95,18 @@ internal sealed class BusinessRuleTests
         Throws(() => Invite(state, caregiver.Id, familyId, "third@test.local", UserRole.Caregiver));
     }
 
+    private void CancelledInvitationCannotBeAccepted()
+    {
+        var (state, admin, baby) = CreateReadyState();
+        var caregiver = _engine.RegisterUser(state, "Second", "Parent", "second@test.local", "hash");
+
+        var invitation = Invite(state, admin.Id, baby.FamilyId, caregiver.Email, UserRole.Caregiver);
+        CancelInvitation(state, admin.Id, baby.FamilyId, invitation.Id);
+
+        Equal("cancelled", state.Invitations.Single(item => item.Id == invitation.Id).Status);
+        Throws(() => AcceptInvitation(state, invitation.Id, caregiver.Id));
+    }
+
     private static FamilyInvitation Invite(AppState state, Guid adminUserId, Guid familyId, string email, UserRole role)
     {
         if (state.Members.All(member => member.UserId != adminUserId || member.FamilyId != familyId || member.Role != UserRole.Admin || member.Status != "accepted"))
@@ -123,6 +136,22 @@ internal sealed class BusinessRuleTests
 
         state.Members.Add(new FamilyMember(user.Id, invitation.FamilyId, invitation.Role, "accepted"));
         state.Invitations[index] = invitation with { Status = "accepted", AcceptedAt = DateTimeOffset.UtcNow };
+    }
+
+    private static void CancelInvitation(AppState state, Guid adminUserId, Guid familyId, Guid invitationId)
+    {
+        if (state.Members.All(member => member.UserId != adminUserId || member.FamilyId != familyId || member.Role != UserRole.Admin || member.Status != "accepted"))
+        {
+            throw new InvalidOperationException("Admin requis.");
+        }
+
+        var index = state.Invitations.FindIndex(invitation => invitation.Id == invitationId && invitation.FamilyId == familyId && invitation.Status == "pending");
+        if (index < 0)
+        {
+            throw new InvalidOperationException("Invitation introuvable.");
+        }
+
+        state.Invitations[index] = state.Invitations[index] with { Status = "cancelled" };
     }
 
     private (AppState State, AppUser User, Baby Baby) CreateReadyState(VectisEngine? engine = null)

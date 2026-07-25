@@ -84,6 +84,11 @@ a { color: inherit; }
   color: #ffffff;
 }
 
+.danger-button {
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--line));
+  color: var(--danger);
+}
+
 .shell {
   width: min(1180px, calc(100% - 28px));
   margin: 28px auto 72px;
@@ -182,6 +187,16 @@ th, td {
   background: color-mix(in srgb, var(--primary) 14%, transparent);
   color: var(--primary);
   font-weight: 700;
+}
+
+.status-pending {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+}
+
+.status-cancelled {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
 }
 
 .danger { color: var(--danger); }
