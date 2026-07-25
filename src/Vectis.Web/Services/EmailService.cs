@@ -56,7 +56,9 @@ public sealed class EmailService
 
         using var client = new SmtpClient(_options.Host, _options.Port)
         {
-            EnableSsl = _options.EnableSsl
+            DeliveryMethod = SmtpDeliveryMethod.Network,
+            EnableSsl = _options.EnableSsl,
+            UseDefaultCredentials = false
         };
 
         if (!string.IsNullOrWhiteSpace(_options.UserName))
@@ -70,6 +72,12 @@ public sealed class EmailService
             return EmailSendResult.Success();
         }
         catch (SmtpException ex)
+        {
+            _logger.LogWarning(ex, "Invitation email delivery failed for {Email}", toEmail);
+            var detail = string.IsNullOrWhiteSpace(ex.Message) ? "Erreur SMTP inconnue." : ex.Message;
+            return new EmailSendResult(false, $"L'e-mail n'a pas pu etre envoye ({detail}). Le lien manuel reste disponible.");
+        }
+        catch (Exception ex)
         {
             _logger.LogWarning(ex, "Invitation email delivery failed for {Email}", toEmail);
             return new EmailSendResult(false, "L'e-mail n'a pas pu etre envoye. Le lien manuel reste disponible.");
