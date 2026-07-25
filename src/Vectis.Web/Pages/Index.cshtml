@@ -47,6 +47,54 @@
         </div>
     </section>
 
+    <section class="grid dashboard-main" style="margin-top:16px">
+        <div class="card chart-card">
+            <div class="card-head">
+                <div>
+                    <h2>Tendance 7 jours</h2>
+                    <p>Tirages et consommations jour par jour.</p>
+                </div>
+                <span class="pill">@Model.MaxDailyVolumeMl ml max</span>
+            </div>
+            <div class="bar-chart" aria-label="Tendance 7 jours">
+                @foreach (var day in Model.DailyTrend)
+                {
+                    <div class="bar-day">
+                        <div class="bar-stack">
+                            <span class="bar pumped" style="height:@Model.BarHeight(day.PumpedMl)%"></span>
+                            <span class="bar consumed" style="height:@Model.BarHeight(day.ConsumedMl)%"></span>
+                        </div>
+                        <strong>@day.Label</strong>
+                        <small>@day.Feedings bib.</small>
+                    </div>
+                }
+            </div>
+            <div class="chart-legend">
+                <span><i class="legend-dot pumped"></i>Tire</span>
+                <span><i class="legend-dot consumed"></i>Bu</span>
+            </div>
+        </div>
+
+        <div class="card chart-card">
+            <div class="card-head">
+                <div>
+                    <h2>Repartition stock</h2>
+                    <p>Lecture rapide des volumes par zone.</p>
+                </div>
+            </div>
+            <div class="donut-layout">
+                <div class="donut" style="@Model.StockDistributionStyle">
+                    <div><strong>@Model.Summary.TotalAvailableMl</strong><span>ml</span></div>
+                </div>
+                <div class="legend-list">
+                    <div><span class="legend-swatch fridge"></span><span>Refrigerateur</span><strong>@Model.RefrigeratorPercent%</strong></div>
+                    <div><span class="legend-swatch freezer"></span><span>Congelateur</span><strong>@Model.FreezerPercent%</strong></div>
+                    <div><span class="legend-swatch other"></span><span>Autre</span><strong>@Model.OtherStockPercent%</strong></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section class="grid two dashboard-grid" style="margin-top:16px">
         <div class="card stack">
             <h2>Aujourd'hui</h2>
@@ -56,18 +104,48 @@
             <div class="activity-row"><span>Moyenne biberon</span><strong>@Model.Summary.AverageConsumedPerBottleMl.ToString("0") ml</strong></div>
         </div>
         <div class="card stack notice">
-            <h2>Prochain contenant recommande</h2>
-            @if (Model.Summary.NextRecommended is null)
-            {
-                <p>Aucun contenant disponible.</p>
-            }
-            else
-            {
-                <p><span class="pill">@Model.Summary.NextRecommended.RemainingQuantityMl ml</span></p>
-                <p>Expiration estimee : @Model.Summary.NextRecommended.EstimatedExpiresAt.LocalDateTime.ToString("g")</p>
-                <p class="muted">Identifiant : @Model.Summary.NextRecommended.Id.ToString()[..8]</p>
-            }
+            <div class="card-head">
+                <div>
+                    <h2>Autonomie</h2>
+                    <p>Projection basee sur les biberons estimes.</p>
+                </div>
+            </div>
+            <div class="gauge" style="@Model.AutonomyStyle">
+                <div class="gauge-ring"><strong>@Model.Summary.EstimatedBottles</strong><span>biberons</span></div>
+            </div>
         </div>
+    </section>
+
+    <section class="card timeline-card" style="margin-top:16px">
+        <div class="card-head">
+            <div>
+                <h2>Priorite operationnelle</h2>
+                <p>Le contenant recommande suit la logique premier expire, premier utilise.</p>
+            </div>
+            <a class="button" asp-page="/Stock">Voir le stock</a>
+        </div>
+        @if (Model.Summary.NextRecommended is null)
+        {
+            <div class="timeline-empty">Aucun contenant disponible.</div>
+        }
+        else
+        {
+            <div class="priority-strip">
+                <div>
+                    <span class="muted">Contenant</span>
+                    <strong>@Model.Summary.NextRecommended.Id.ToString()[..8]</strong>
+                </div>
+                <div>
+                    <span class="muted">Volume</span>
+                    <strong>@Model.Summary.NextRecommended.RemainingQuantityMl ml</strong>
+                </div>
+                <div>
+                    <span class="muted">Expiration</span>
+                    <strong>@Model.Summary.NextRecommended.EstimatedExpiresAt.LocalDateTime.ToString("g")</strong>
+                </div>
+                <div class="priority-line"><span></span></div>
+            </div>
+        }
     </section>
 
     <section class="grid two dashboard-grid" style="margin-top:16px">
