@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Vectis.Domain;
 using Vectis.Web.Services;
 
@@ -21,6 +22,10 @@ public sealed class PumpingModel : PageModel
 
     [BindProperty]
     public PumpingInput Input { get; set; } = new();
+
+    public IReadOnlyList<SelectListItem> LocationOptions { get; } = Enum.GetValues<StorageLocation>()
+        .Select(location => new SelectListItem(DisplayLabels.Location(location), location.ToString()))
+        .ToList();
 
     public void OnGet()
     {

@@ -4,6 +4,28 @@ namespace Vectis.Web.Services;
 
 public static class DisplayLabels
 {
+    public static string ContainerType(ContainerType type)
+    {
+        return type switch
+        {
+            Domain.ContainerType.StorageBag => "Sachet de conservation",
+            Domain.ContainerType.Bottle => "Biberon",
+            Domain.ContainerType.Jar => "Pot",
+            Domain.ContainerType.Other => "Autre",
+            _ => type.ToString()
+        };
+    }
+
+    public static string UserRole(UserRole role)
+    {
+        return role switch
+        {
+            Domain.UserRole.Admin => "Administrateur",
+            Domain.UserRole.Caregiver => "Accompagnant",
+            _ => role.ToString()
+        };
+    }
+
     public static string Location(StorageLocation location)
     {
         return location switch

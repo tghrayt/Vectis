@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Vectis.Domain;
 using Vectis.Web.Services;
 
@@ -30,6 +31,9 @@ public sealed class UsersModel : PageModel
     public string? CreatedInvitationLink { get; private set; }
     public string? EmailStatusMessage { get; private set; }
     public string? ActionStatusMessage { get; private set; }
+    public IReadOnlyList<SelectListItem> RoleOptions { get; } = Enum.GetValues<UserRole>()
+        .Select(role => new SelectListItem(DisplayLabels.UserRole(role), role.ToString()))
+        .ToList();
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -136,7 +140,7 @@ public sealed class UsersModel : PageModel
 
     public static string RoleLabel(UserRole role)
     {
-        return role == UserRole.Admin ? "Administrateur" : "Accompagnant";
+        return DisplayLabels.UserRole(role);
     }
 
     public static string StatusLabel(string status)

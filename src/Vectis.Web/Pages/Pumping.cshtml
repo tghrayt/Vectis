@@ -24,9 +24,9 @@
     <h2>Contenants</h2>
     <div class="grid two">
         <label>Contenant 1 (ml) <input asp-for="Input.Container1Ml" type="number" min="1" /></label>
-        <label>Lieu 1 <select asp-for="Input.Location1" asp-items="Html.GetEnumSelectList<StorageLocation>()"></select></label>
+        <label>Lieu 1 <select asp-for="Input.Location1" asp-items="Model.LocationOptions"></select></label>
         <label>Contenant 2 (ml) <input asp-for="Input.Container2Ml" type="number" min="0" /></label>
-        <label>Lieu 2 <select asp-for="Input.Location2" asp-items="Html.GetEnumSelectList<StorageLocation>()"></select></label>
+        <label>Lieu 2 <select asp-for="Input.Location2" asp-items="Model.LocationOptions"></select></label>
     </div>
     <label>Notes <textarea asp-for="Input.Notes"></textarea></label>
     <button class="primary" type="submit">Enregistrer le tirage</button>

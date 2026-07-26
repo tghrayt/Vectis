@@ -19,7 +19,7 @@
         <div class="grid two">
             <label>Email <input asp-for="Input.Email" type="email" /></label>
             <label>Role
-                <select asp-for="Input.Role" asp-items="Html.GetEnumSelectList<UserRole>()"></select>
+                <select asp-for="Input.Role" asp-items="Model.RoleOptions"></select>
             </label>
         </div>
         <button class="primary" type="submit">Creer l'invitation</button>
