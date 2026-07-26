@@ -478,8 +478,12 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Vectis local data and deployment keys
+src/Vectis.Web/App_Data/
+vectis_deploy_key
+vectis_deploy_key.pub
+*.pem
+*.key
+
 # Vim temporary swap files
 *.swp
-
-# Vectis local data
-src/Vectis.Web/App_Data/
