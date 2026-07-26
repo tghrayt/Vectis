@@ -7,7 +7,7 @@
 <section class="page-head">
     <div>
         <h1>Historique</h1>
-        <p>Tirages, consommations et mouvements de stock importants.</p>
+        <p>Comprends rapidement les tirages, biberons, consommations et changements importants.</p>
     </div>
 </section>
 
@@ -25,28 +25,110 @@
     </div>
 }
 
-<section class="grid two">
-    <div class="card">
-        <h2>Tirages</h2>
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>Date</th><th>Quantite</th><th>Notes</th></tr></thead>
-                <tbody>
-                @foreach (var item in Model.PumpingSessions)
-                {
-                    <tr><td>@item.PumpedAt.LocalDateTime.ToString("g")</td><td>@item.TotalQuantityMl ml</td><td>@item.Notes</td></tr>
-                }
-                </tbody>
-            </table>
+<section class="history-summary">
+    <article class="history-hero">
+        <span class="eyebrow">Aujourd'hui</span>
+        <strong>@Model.ConsumedTodayMl ml bus</strong>
+        <p>@Model.PumpedTodayMl ml tires et @Model.PreparedTodayMl ml prepares.</p>
+    </article>
+    <article class="history-signal">
+        <span>Tirage 7 jours</span>
+        <strong>@Model.PumpedSevenDaysMl ml</strong>
+        <small>Total enregistre sur la semaine glissante</small>
+    </article>
+    <article class="history-signal">
+        <span>Consommation 7 jours</span>
+        <strong>@Model.ConsumedSevenDaysMl ml</strong>
+        <small>Volume bu sur la semaine glissante</small>
+    </article>
+    <article class="history-signal">
+        <span>Balance 7 jours</span>
+        <strong>@(Model.PumpedSevenDaysMl - Model.ConsumedSevenDaysMl >= 0 ? "+" : "")@(Model.PumpedSevenDaysMl - Model.ConsumedSevenDaysMl) ml</strong>
+        <small>Tire moins bu</small>
+    </article>
+</section>
+
+<nav class="filter-tabs" aria-label="Filtres de l'historique">
+    @foreach (var filter in Model.Filters)
+    {
+        <a class="@(Model.ActiveFilter == filter.Key ? "active" : "")" asp-page="/History" asp-route-filter="@filter.Key">
+            <span>@filter.Label</span>
+            <strong>@filter.Count</strong>
+        </a>
+    }
+</nav>
+
+<section class="history-layout">
+    <div class="card timeline-card">
+        <div class="card-head">
+            <div>
+                <h2>Chronologie</h2>
+                <p>Evenements les plus recents dans l'ordre reel.</p>
+            </div>
+            <span class="pill">@Model.Events.Count evenement(s)</span>
         </div>
+
+        @if (Model.Events.Count == 0)
+        {
+            <div class="timeline-empty">Aucun evenement pour ce filtre.</div>
+        }
+        else
+        {
+            <div class="history-timeline">
+                @foreach (var item in Model.Events)
+                {
+                    <article class="history-event @item.Severity">
+                        <div class="history-dot"></div>
+                        <div>
+                            <span class="pill @item.Severity">@item.KindLabel</span>
+                            <h3>@item.Title</h3>
+                            <p>@item.Detail</p>
+                            <small>@item.Meta</small>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(item.VolumeLabel))
+                        {
+                            <strong>@item.VolumeLabel</strong>
+                        }
+                    </article>
+                }
+            </div>
+        }
     </div>
+
+    <aside class="history-side">
+        <div class="card stack">
+            <h2>Derniers biberons</h2>
+            @foreach (var item in Model.Feedings.Take(4))
+            {
+                <div class="activity-row"><span>@item.StartedAt.LocalDateTime.ToString("g")</span><strong>@item.ConsumedQuantityMl/@item.PreparedQuantityMl ml</strong></div>
+            }
+            @if (Model.Feedings.Count == 0)
+            {
+                <div class="timeline-empty">Aucune consommation.</div>
+            }
+        </div>
+        <div class="card stack">
+            <h2>Derniers tirages</h2>
+            @foreach (var item in Model.PumpingSessions.Take(4))
+            {
+                <div class="activity-row"><span>@item.PumpedAt.LocalDateTime.ToString("g")</span><strong>@item.TotalQuantityMl ml</strong></div>
+            }
+            @if (Model.PumpingSessions.Count == 0)
+            {
+                <div class="timeline-empty">Aucun tirage.</div>
+            }
+        </div>
+    </aside>
+</section>
+
+<section class="grid two dashboard-grid" style="margin-top:16px">
     <div class="card">
         <h2>Biberons prepares</h2>
         <div class="table-wrap">
-            <table>
+            <table class="compact-table">
                 <thead><tr><th>Date</th><th>Quantite</th><th>Statut</th><th>Sources</th></tr></thead>
                 <tbody>
-                @foreach (var item in Model.PreparedBottles)
+                @foreach (var item in Model.PreparedBottles.Take(8))
                 {
                     <tr>
                         <td>@item.PreparedAt.LocalDateTime.ToString("g")</td>
@@ -63,38 +145,22 @@
             </table>
         </div>
     </div>
-</section>
-
-<section class="card" style="margin-top:16px">
-    <h2>Consommations</h2>
-    <div class="table-wrap">
-        <table>
-            <thead><tr><th>Date</th><th>Prepare</th><th>Bu</th><th>Reste</th></tr></thead>
-            <tbody>
-            @foreach (var item in Model.Feedings)
-            {
-                <tr><td>@item.StartedAt.LocalDateTime.ToString("g")</td><td>@item.PreparedQuantityMl ml</td><td>@item.ConsumedQuantityMl ml</td><td>@item.LeftoverQuantityMl ml @item.LeftoverOutcome</td></tr>
-            }
-            @if (Model.Feedings.Count == 0)
-            {
-                <tr><td colspan="4" class="muted">Aucune consommation enregistree.</td></tr>
-            }
-            </tbody>
-        </table>
-    </div>
-</section>
-
-<section class="card" style="margin-top:16px">
-    <h2>Audit</h2>
-    <div class="table-wrap">
-        <table>
-            <thead><tr><th>Date</th><th>Action</th><th>Entite</th><th>Valeur</th></tr></thead>
-            <tbody>
-            @foreach (var item in Model.AuditEntries)
-            {
-                <tr><td>@item.OccurredAt.LocalDateTime.ToString("g")</td><td>@item.Action</td><td>@item.EntityName</td><td>@item.NewValue</td></tr>
-            }
-            </tbody>
-        </table>
+    <div class="card">
+        <h2>Audit recent</h2>
+        <div class="table-wrap">
+            <table class="compact-table">
+                <thead><tr><th>Date</th><th>Action</th><th>Entite</th><th>Valeur</th></tr></thead>
+                <tbody>
+                @foreach (var item in Model.AuditEntries.Take(8))
+                {
+                    <tr><td>@item.OccurredAt.LocalDateTime.ToString("g")</td><td>@item.Action</td><td>@item.EntityName</td><td>@item.NewValue</td></tr>
+                }
+                @if (Model.AuditEntries.Count == 0)
+                {
+                    <tr><td colspan="4" class="muted">Aucun audit recent.</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
     </div>
 </section>

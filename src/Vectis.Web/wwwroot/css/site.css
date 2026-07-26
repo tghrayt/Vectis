@@ -635,6 +635,118 @@ p { color: var(--muted); line-height: 1.6; }
   color: var(--text);
 }
 
+.history-summary {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1.2fr) repeat(3, minmax(180px, 0.6fr));
+  margin-bottom: 16px;
+}
+
+.history-hero,
+.history-signal {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 8px;
+  min-height: 136px;
+  padding: 18px;
+}
+
+.history-hero {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--primary) 14%, var(--panel)), var(--panel) 60%),
+    var(--panel);
+  border-left: 5px solid var(--primary);
+}
+
+.history-hero strong {
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1;
+}
+
+.history-hero p {
+  margin: 0;
+}
+
+.history-signal {
+  border-left: 4px solid var(--primary);
+}
+
+.history-signal span,
+.history-signal small {
+  color: var(--muted);
+}
+
+.history-signal strong {
+  font-size: 1.55rem;
+}
+
+.history-layout {
+  align-items: start;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.42fr);
+}
+
+.history-side {
+  display: grid;
+  gap: 16px;
+}
+
+.history-timeline {
+  display: grid;
+  gap: 12px;
+}
+
+.history-event {
+  align-items: start;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--primary);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: 14px;
+}
+
+.history-event.warning {
+  border-left-color: var(--accent);
+}
+
+.history-event.danger {
+  border-left-color: var(--danger);
+}
+
+.history-event.info {
+  border-left-color: #3b82f6;
+}
+
+.history-dot {
+  background: var(--primary);
+  border-radius: 999px;
+  height: 12px;
+  margin-top: 7px;
+  width: 12px;
+}
+
+.history-event.warning .history-dot { background: var(--accent); }
+.history-event.danger .history-dot { background: var(--danger); }
+.history-event.info .history-dot { background: #3b82f6; }
+
+.history-event h3 {
+  margin-top: 8px;
+}
+
+.history-event p {
+  margin: 4px 0;
+}
+
+.history-event small {
+  color: var(--muted);
+}
+
 .settings-layout {
   align-items: start;
   display: grid;
@@ -1163,7 +1275,7 @@ td {
 
 @media (max-width: 860px) {
   .topbar { grid-template-columns: 1fr; }
-  .grid.stats, .grid.two, .grid.three, .dashboard-band, .dashboard-main, .priority-strip, .alert-grid, .action-alert, .pending-bottle, .settings-layout, .notification-settings, .command-center, .decision-panel, .stock-overview, .stock-item-main, .stock-meta, .stock-actions, .bottle-planner, .recommendation-strip, .bottle-source-grid, .prep-status, .feed-workbench, .feed-mode-grid, .feed-result-grid { grid-template-columns: 1fr; }
+  .grid.stats, .grid.two, .grid.three, .dashboard-band, .dashboard-main, .priority-strip, .alert-grid, .action-alert, .pending-bottle, .settings-layout, .notification-settings, .command-center, .decision-panel, .stock-overview, .stock-item-main, .stock-meta, .stock-actions, .bottle-planner, .recommendation-strip, .bottle-source-grid, .prep-status, .feed-workbench, .feed-mode-grid, .feed-result-grid, .history-summary, .history-layout, .history-event { grid-template-columns: 1fr; }
   .page-head { align-items: start; flex-direction: column; }
   .table-actions { flex-wrap: wrap; }
   .card-head { flex-direction: column; }
