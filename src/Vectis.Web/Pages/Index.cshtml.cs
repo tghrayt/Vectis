@@ -8,6 +8,7 @@ namespace Vectis.Web.Pages;
 
 public sealed record DashboardDay(string Label, int PumpedMl, int ConsumedMl, int Feedings);
 public sealed record DashboardAlert(string Severity, string Title, string Message, string ActionLabel, string Href);
+public sealed record DashboardAction(string Severity, string Eyebrow, string Title, string Message, string ActionLabel, string Href, string IconId);
 
 [Authorize]
 public sealed class IndexModel : PageModel
@@ -38,6 +39,10 @@ public sealed class IndexModel : PageModel
     public IReadOnlyList<Feeding> RecentFeedings { get; private set; } = [];
     public IReadOnlyList<PumpingSession> RecentPumpingSessions { get; private set; } = [];
     public IReadOnlyList<DashboardDay> DailyTrend { get; private set; } = [];
+    public DashboardAction? RecommendedAction { get; private set; }
+    public string NextContainerLabel { get; private set; } = "Aucun";
+    public string NextContainerExpiresLabel { get; private set; } = "-";
+    public int IntakeBalanceTodayMl { get; private set; }
     public int MaxDailyVolumeMl { get; private set; } = 1;
     public int RefrigeratorPercent { get; private set; }
     public int FreezerPercent { get; private set; }
@@ -73,9 +78,12 @@ public sealed class IndexModel : PageModel
         RecentPumpingSessions = history.PumpingSessions.Take(5).ToList();
         DailyTrend = BuildDailyTrend(history, today);
         MaxDailyVolumeMl = Math.Max(1, DailyTrend.Max(day => Math.Max(day.PumpedMl, day.ConsumedMl)));
+        IntakeBalanceTodayMl = Summary.PumpedTodayMl - Summary.ConsumedTodayMl;
         SetStockDistribution(Summary);
         SetStockHealth(Summary);
+        SetNextContainer(Summary);
         Alerts = BuildAlerts(Summary, availableContainers, PendingBottles, PendingInvitationCount, context.Baby);
+        RecommendedAction = BuildRecommendedAction(Summary, PendingBottles, PendingInvitationCount, context.Baby);
         return Page();
     }
 
@@ -138,6 +146,108 @@ public sealed class IndexModel : PageModel
 
         StockHealthLabel = "Stable";
         StockHealthClass = "ok";
+    }
+
+    private void SetNextContainer(StockSummary summary)
+    {
+        if (summary.NextRecommended is null)
+        {
+            return;
+        }
+
+        NextContainerLabel = $"{DisplayLabels.Location(summary.NextRecommended.Location)} - {summary.NextRecommended.RemainingQuantityMl} ml";
+        NextContainerExpiresLabel = summary.NextRecommended.EstimatedExpiresAt.LocalDateTime.ToString("g");
+    }
+
+    private static DashboardAction BuildRecommendedAction(
+        StockSummary summary,
+        IReadOnlyList<PreparedBottle> pendingBottles,
+        int pendingInvitationCount,
+        Baby baby)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var oldBottle = pendingBottles.FirstOrDefault(bottle => now - bottle.PreparedAt >= TimeSpan.FromHours(2));
+        if (oldBottle is not null)
+        {
+            return new DashboardAction(
+                "danger",
+                "Action urgente",
+                "Traiter le biberon en attente",
+                $"{oldBottle.TotalQuantityMl} ml ont ete prepares a {oldBottle.PreparedAt.LocalDateTime:g}. Note s'il a ete donne ou jette.",
+                "Ouvrir le biberon",
+                $"/Feed?prepared={oldBottle.Id}",
+                "icon-alert");
+        }
+
+        if (pendingBottles.Count > 0)
+        {
+            var nextBottle = pendingBottles[0];
+            return new DashboardAction(
+                "info",
+                "Pret maintenant",
+                "Donner le prochain biberon",
+                $"{nextBottle.TotalQuantityMl} ml sont deja prets. Enregistre le repas pour garder le stock juste.",
+                "Donner",
+                $"/Feed?prepared={nextBottle.Id}",
+                "icon-feed");
+        }
+
+        if (summary.TotalAvailableMl <= 0)
+        {
+            return new DashboardAction(
+                "danger",
+                "Stock vide",
+                "Ajouter un tirage",
+                $"Aucun lait disponible pour {baby.FirstName}. Le prochain geste utile est d'enregistrer un nouveau tirage.",
+                "Ajouter un tirage",
+                "/Pumping",
+                "icon-pumping");
+        }
+
+        if (summary.NextRecommended is not null && summary.NextRecommended.EstimatedExpiresAt <= now.AddHours(24))
+        {
+            return new DashboardAction(
+                "warning",
+                "Priorite anti-perte",
+                "Preparer avec le lait qui expire",
+                $"{summary.NextRecommended.RemainingQuantityMl} ml expirent le {summary.NextRecommended.EstimatedExpiresAt.LocalDateTime:g}.",
+                "Preparer",
+                "/Bottle",
+                "icon-bottle");
+        }
+
+        if (summary.EstimatedBottles <= 2 || summary.TotalAvailableMl < baby.UsualBottleMl * 2)
+        {
+            return new DashboardAction(
+                "warning",
+                "Anticipation",
+                "Renforcer le stock",
+                $"Il reste environ {summary.EstimatedBottles} biberon(s). Un tirage maintenant evitera une rupture.",
+                "Ajouter un tirage",
+                "/Pumping",
+                "icon-pumping");
+        }
+
+        if (pendingInvitationCount > 0)
+        {
+            return new DashboardAction(
+                "info",
+                "Coordination famille",
+                "Suivre les invitations",
+                $"{pendingInvitationCount} invitation(s) sont encore en attente.",
+                "Voir les utilisateurs",
+                "/Users",
+                "icon-users");
+        }
+
+        return new DashboardAction(
+            "ok",
+            "Situation stable",
+            "Continuer le suivi",
+            $"Le stock couvre environ {summary.EstimatedBottles} biberon(s). La prochaine preparation peut suivre la priorite d'expiration.",
+            "Voir le stock",
+            "/Stock",
+            "icon-check");
     }
 
     private static IReadOnlyList<DashboardAlert> BuildAlerts(

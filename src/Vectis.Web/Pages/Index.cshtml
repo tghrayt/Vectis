@@ -18,6 +18,36 @@
 
 @if (Model.Summary is not null)
 {
+    <section class="command-center">
+        <article class="decision-panel @Model.RecommendedAction?.Severity">
+            <div class="decision-copy">
+                <span class="eyebrow">@Model.RecommendedAction?.Eyebrow</span>
+                <h2>@Model.RecommendedAction?.Title</h2>
+                <p>@Model.RecommendedAction?.Message</p>
+            </div>
+            <a class="button primary decision-action" href="@Model.RecommendedAction?.Href">
+                <svg class="icon"><use href="#@Model.RecommendedAction?.IconId" /></svg>@Model.RecommendedAction?.ActionLabel
+            </a>
+        </article>
+        <aside class="today-brief">
+            <div>
+                <span>Priorite stock</span>
+                <strong>@Model.NextContainerLabel</strong>
+                <small>Expiration @Model.NextContainerExpiresLabel</small>
+            </div>
+            <div>
+                <span>Balance du jour</span>
+                <strong>@(Model.IntakeBalanceTodayMl >= 0 ? "+" : "")@Model.IntakeBalanceTodayMl ml</strong>
+                <small>Tire moins bu aujourd'hui</small>
+            </div>
+            <div>
+                <span>Autonomie</span>
+                <strong>@Model.Summary.EstimatedBottles biberon(s)</strong>
+                <small>@Model.Summary.TotalAvailableMl ml disponibles</small>
+            </div>
+        </aside>
+    </section>
+
     <section class="grid stats">
         <div class="card metric"><span><svg class="icon metric-icon"><use href="#icon-stock" /></svg>Stock disponible</span><strong>@Model.Summary.TotalAvailableMl ml</strong></div>
         <div class="card metric"><span><svg class="icon metric-icon"><use href="#icon-feed" /></svg>Biberons donnes aujourd'hui</span><strong>@Model.FeedingCountToday</strong></div>
