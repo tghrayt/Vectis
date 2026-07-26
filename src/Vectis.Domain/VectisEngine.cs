@@ -162,9 +162,18 @@ public sealed class VectisEngine
             throw new InvalidOperationException("La consommation doit rester entre 0 et la quantite preparee.");
         }
 
-        if (bottleId is not null && state.PreparedBottles.All(bottle => bottle.Id != bottleId.Value))
+        PreparedBottle? preparedBottle = null;
+        if (bottleId is not null)
         {
-            throw new InvalidOperationException("Le biberon prepare est introuvable.");
+            preparedBottle = state.PreparedBottles.FirstOrDefault(bottle => bottle.Id == bottleId.Value && bottle.BabyId == babyId)
+                ?? throw new InvalidOperationException("Le biberon prepare est introuvable.");
+
+            if (preparedBottle.Status != "prepared")
+            {
+                throw new InvalidOperationException("Ce biberon a deja ete traite.");
+            }
+
+            preparedMl = preparedBottle.TotalQuantityMl;
         }
 
         var feeding = new Feeding(

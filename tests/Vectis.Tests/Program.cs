@@ -15,6 +15,7 @@ internal sealed class BusinessRuleTests
         PreparingBottleDecreasesStockAndKeepsTraceability();
         PreparingBottleCannotOverdrawSameContainerTwice();
         FeedingUpdatesPreparedBottleStatus();
+        PreparedBottleCannotBeFedTwice();
         ExpiredContainerIsNotRecommended();
         FeedingTracksLeftover();
         FamilyAccessIsIsolated();
@@ -85,6 +86,22 @@ internal sealed class BusinessRuleTests
         _engine.RecordFeeding(state, user.Id, baby.Id, bottle.Id, bottle.TotalQuantityMl, 90, FeedingReaction.Normal, "jete", "");
 
         Equal("partially_consumed", state.PreparedBottles.Single(item => item.Id == bottle.Id).Status);
+    }
+
+    private void PreparedBottleCannotBeFedTwice()
+    {
+        var (state, user, baby) = CreateReadyState();
+        _engine.AddPumpingSession(state, user.Id, baby.Id, DateTimeOffset.UtcNow, 120, null, "both", "",
+        [
+            new(ContainerType.StorageBag, 120, StorageLocation.Refrigerator, "")
+        ]);
+
+        var available = _engine.AvailableContainers(state, baby.Id);
+        var bottle = _engine.PrepareBottle(state, user.Id, baby.Id, [new(available[0].Id, 120)], "");
+        Equal("prepared", bottle.Status);
+
+        _engine.RecordFeeding(state, user.Id, baby.Id, bottle.Id, bottle.TotalQuantityMl, 120, FeedingReaction.Normal, "termine", "");
+        Throws(() => _engine.RecordFeeding(state, user.Id, baby.Id, bottle.Id, bottle.TotalQuantityMl, 120, FeedingReaction.Normal, "termine", ""));
     }
 
     private void ExpiredContainerIsNotRecommended()

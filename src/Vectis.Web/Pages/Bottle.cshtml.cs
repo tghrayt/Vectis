@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Vectis.Domain;
 using Vectis.Web.Services;
 
@@ -23,9 +22,6 @@ public sealed class BottleModel : PageModel
     }
 
     public IReadOnlyList<MilkContainer> Containers { get; private set; } = [];
-    public IReadOnlyList<SelectListItem> ReactionOptions { get; } = Enum.GetValues<FeedingReaction>()
-        .Select(reaction => new SelectListItem(DisplayLabels.FeedingReaction(reaction), reaction.ToString()))
-        .ToList();
 
     [BindProperty]
     public BottleInput Input { get; set; } = new();
@@ -44,8 +40,6 @@ public sealed class BottleModel : PageModel
             Input.Container2Id = Containers[1].Id;
             Input.Container2Ml = Math.Min(60, Containers[1].RemainingQuantityMl);
         }
-
-        Input.ConsumedMl = Input.Container1Ml + Input.Container2Ml;
         return Page();
     }
 
@@ -75,8 +69,8 @@ public sealed class BottleModel : PageModel
                 sources.Add(new PreparedBottleSource(Input.Container2Id.Value, Input.Container2Ml));
             }
 
-            await _bottleService.PrepareAndFeedAsync(new PrepareAndFeedCommand(context.User.Id, context.Baby.Id, sources, Input.ConsumedMl, Input.Reaction, Input.LeftoverOutcome, Input.Notes));
-            return RedirectToPage("/History", new { saved = "bottle" });
+            var bottle = await _bottleService.PrepareAsync(new PrepareBottleCommand(context.User.Id, context.Baby.Id, sources, Input.Notes));
+            return RedirectToPage("/Feed", new { prepared = bottle.Id });
         }
         catch (InvalidOperationException ex)
         {
@@ -104,9 +98,6 @@ public sealed class BottleModel : PageModel
         [Range(0, 2000)] public int Container1Ml { get; set; } = 60;
         public Guid? Container2Id { get; set; }
         [Range(0, 2000)] public int Container2Ml { get; set; } = 60;
-        [Range(0, 2000)] public int ConsumedMl { get; set; } = 90;
-        public FeedingReaction Reaction { get; set; } = FeedingReaction.Normal;
-        public string LeftoverOutcome { get; set; } = "jete";
         public string Notes { get; set; } = "";
     }
 }

@@ -14,7 +14,14 @@
 @if (Model.BottleSaved)
 {
     <div class="card notice" style="margin-bottom:16px">
-        <p>Biberon enregistre. Le stock et l'historique ont ete mis a jour.</p>
+        <p>Biberon prepare. Il reste disponible dans les biberons en attente.</p>
+    </div>
+}
+
+@if (Model.FeedingSaved)
+{
+    <div class="card notice" style="margin-bottom:16px">
+        <p>Consommation enregistree. Le statut du biberon a ete mis a jour.</p>
     </div>
 }
 

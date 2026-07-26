@@ -1,0 +1,77 @@
+@page
+@model Vectis.Web.Pages.FeedModel
+@{
+    ViewData["Title"] = "Donner un biberon";
+}
+
+<section class="page-head">
+    <div>
+        <h1>Donner un biberon</h1>
+        <p>Selectionne un biberon prepare, puis note ce que bebe a bu.</p>
+    </div>
+    <a class="button" asp-page="/Bottle">Preparer un biberon</a>
+</section>
+
+@if (Model.BottlePrepared)
+{
+    <div class="card notice" style="margin-bottom:16px">
+        <p>Biberon prepare. Il est maintenant disponible pour le repas.</p>
+    </div>
+}
+
+@if (Model.PendingBottles.Count == 0)
+{
+    <div class="card notice stack">
+        <h2>Aucun biberon en attente</h2>
+        <p>Prepare d'abord un biberon depuis le stock.</p>
+        <a class="button primary" asp-page="/Bottle">Preparer un biberon</a>
+    </div>
+}
+else
+{
+    <form method="post" class="card stack">
+        <div asp-validation-summary="All" class="danger"></div>
+        <div class="grid two">
+            <label>Biberon prepare
+                <select asp-for="Input.BottleId" data-bottle-select>
+                    @foreach (var bottle in Model.PendingBottles)
+                    {
+                        <option value="@bottle.Id" data-quantity="@bottle.TotalQuantityMl">
+                            @bottle.PreparedAt.LocalDateTime.ToString("g") - @bottle.TotalQuantityMl ml - @bottle.Sources.Count source(s)
+                        </option>
+                    }
+                </select>
+            </label>
+            <label>Quantite bue (ml)
+                <input asp-for="Input.ConsumedMl" type="number" min="0" data-consumed />
+            </label>
+            <label>Reaction
+                <select asp-for="Input.Reaction" asp-items="Model.ReactionOptions"></select>
+            </label>
+            <label>Devenir du reste
+                <input asp-for="Input.LeftoverOutcome" placeholder="jete, conserve, autre..." />
+            </label>
+        </div>
+        <label>Notes <textarea asp-for="Input.Notes"></textarea></label>
+        <button class="primary" type="submit">Enregistrer la consommation</button>
+    </form>
+
+    <script>
+        (() => {
+            const select = document.querySelector("[data-bottle-select]");
+            const consumed = document.querySelector("[data-consumed]");
+
+            const refresh = () => {
+                const option = select.selectedOptions[0];
+                const quantity = Number(option?.dataset.quantity || 0);
+                consumed.max = quantity;
+                if (!consumed.value || Number(consumed.value) > quantity) {
+                    consumed.value = quantity;
+                }
+            };
+
+            select.addEventListener("change", refresh);
+            refresh();
+        })();
+    </script>
+}

@@ -1,14 +1,15 @@
 @page
 @model Vectis.Web.Pages.BottleModel
 @{
-    ViewData["Title"] = "Biberon";
+    ViewData["Title"] = "Preparer un biberon";
 }
 
 <section class="page-head">
     <div>
-        <h1>Preparer et enregistrer un biberon</h1>
-        <p>Choisis les contenants utilises, puis indique ce que bebe a vraiment bu.</p>
+        <h1>Preparer un biberon</h1>
+        <p>Choisis le lait utilise. Le biberon restera en attente jusqu'au repas.</p>
     </div>
+    <a class="button" asp-page="/Feed">Donner un biberon</a>
 </section>
 
 @if (Model.Containers.Count == 0)
@@ -27,7 +28,7 @@ else
         <section class="card stack">
             <div class="card-head">
                 <div>
-                    <h2>1. Lait utilise</h2>
+                    <h2>Lait utilise</h2>
                     <p>La source 1 est obligatoire. La source 2 sert seulement si tu melanges deux contenants.</p>
                 </div>
                 <span class="pill"><span id="prepared-total">@((Model.Input.Container1Ml + Model.Input.Container2Ml).ToString())</span> ml prepares</span>
@@ -62,39 +63,20 @@ else
         </section>
 
         <section class="card stack">
-            <div class="card-head">
-                <div>
-                    <h2>2. Consommation</h2>
-                    <p>Si bebe ne finit pas, Vectis calcule le reste automatiquement.</p>
-                </div>
-            </div>
-            <div class="grid two">
-                <label>Quantite bue (ml)
-                    <input asp-for="Input.ConsumedMl" type="number" min="0" data-consumed />
-                </label>
-                <label>Reaction
-                    <select asp-for="Input.Reaction" asp-items="Model.ReactionOptions"></select>
-                </label>
-            </div>
-            <label>Devenir du reste <input asp-for="Input.LeftoverOutcome" placeholder="jete, conserve, autre..." /></label>
+            <h2>Details</h2>
             <label>Notes <textarea asp-for="Input.Notes"></textarea></label>
-            <button class="primary" type="submit">Enregistrer le biberon</button>
+            <button class="primary" type="submit">Preparer le biberon</button>
         </section>
     </form>
 
     <script>
         (() => {
             const sources = document.querySelectorAll("[data-bottle-source]");
-            const consumed = document.querySelector("[data-consumed]");
             const total = document.getElementById("prepared-total");
 
             const refresh = () => {
                 const prepared = Array.from(sources).reduce((sum, input) => sum + Number(input.value || 0), 0);
                 total.textContent = prepared;
-                consumed.max = prepared;
-                if (Number(consumed.value || 0) > prepared) {
-                    consumed.value = prepared;
-                }
             };
 
             sources.forEach(input => input.addEventListener("input", refresh));

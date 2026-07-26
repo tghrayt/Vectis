@@ -15,19 +15,22 @@ public sealed class IndexModel : PageModel
     private readonly StockService _stockService;
     private readonly HistoryService _historyService;
     private readonly FamilyService _familyService;
+    private readonly BottleService _bottleService;
 
-    public IndexModel(CurrentUser currentUser, StockService stockService, HistoryService historyService, FamilyService familyService)
+    public IndexModel(CurrentUser currentUser, StockService stockService, HistoryService historyService, FamilyService familyService, BottleService bottleService)
     {
         _currentUser = currentUser;
         _stockService = stockService;
         _historyService = historyService;
         _familyService = familyService;
+        _bottleService = bottleService;
     }
 
     public StockSummary? Summary { get; private set; }
     public string BabyName { get; private set; } = "";
     public int MemberCount { get; private set; }
     public int PendingInvitationCount { get; private set; }
+    public int PendingBottleCount { get; private set; }
     public int FeedingCountToday { get; private set; }
     public IReadOnlyList<Feeding> RecentFeedings { get; private set; } = [];
     public IReadOnlyList<PumpingSession> RecentPumpingSessions { get; private set; } = [];
@@ -55,10 +58,12 @@ public sealed class IndexModel : PageModel
         Summary = await _stockService.GetSummaryAsync(context.User.Id, context.Baby.Id);
         var history = await _historyService.GetAsync(context.User.Id, context.Baby.Id);
         var users = await _familyService.GetUsersAsync(context.Family.Id, context.User.Id);
+        var pendingBottles = await _bottleService.GetPendingAsync(context.User.Id, context.Baby.Id);
         var today = DateTimeOffset.Now.Date;
 
         MemberCount = users.Members.Count;
         PendingInvitationCount = users.Invitations.Count(invitation => invitation.Status == "pending");
+        PendingBottleCount = pendingBottles.Count;
         FeedingCountToday = history.Feedings.Count(feeding => feeding.StartedAt.ToLocalTime().Date == today);
         RecentFeedings = history.Feedings.Take(5).ToList();
         RecentPumpingSessions = history.PumpingSessions.Take(5).ToList();

@@ -23,6 +23,7 @@ public sealed class HistoryModel : PageModel
     public IReadOnlyList<Feeding> Feedings { get; private set; } = [];
     public IReadOnlyList<AuditEntry> AuditEntries { get; private set; } = [];
     public bool BottleSaved { get; private set; }
+    public bool FeedingSaved { get; private set; }
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -33,6 +34,7 @@ public sealed class HistoryModel : PageModel
         }
 
         BottleSaved = Request.Query["saved"] == "bottle";
+        FeedingSaved = Request.Query["saved"] == "feeding";
         var history = await _historyService.GetAsync(context.User.Id, context.Baby.Id);
         PumpingSessions = history.PumpingSessions;
         PreparedBottles = history.PreparedBottles;

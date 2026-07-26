@@ -12,6 +12,7 @@
     <div class="toolbar">
         <a class="button primary" asp-page="/Pumping">Ajouter un tirage</a>
         <a class="button" asp-page="/Bottle">Preparer un biberon</a>
+        <a class="button" asp-page="/Feed">Donner un biberon</a>
     </div>
 </section>
 
@@ -19,9 +20,9 @@
 {
     <section class="grid stats">
         <div class="card metric"><span>Stock disponible</span><strong>@Model.Summary.TotalAvailableMl ml</strong></div>
-        <div class="card metric"><span>Biberons aujourd'hui</span><strong>@Model.FeedingCountToday</strong></div>
+        <div class="card metric"><span>Biberons donnes aujourd'hui</span><strong>@Model.FeedingCountToday</strong></div>
         <div class="card metric"><span>Biberons estimes</span><strong>@Model.Summary.EstimatedBottles</strong></div>
-        <div class="card metric"><span>Membres famille</span><strong>@Model.MemberCount</strong></div>
+        <div class="card metric"><span>Biberons en attente</span><strong>@Model.PendingBottleCount</strong></div>
     </section>
 
     <section class="dashboard-band" style="margin-top:16px">
@@ -41,9 +42,9 @@
             <small>reserve longue duree</small>
         </div>
         <div class="status-panel">
-            <span>Invitations</span>
-            <strong>@Model.PendingInvitationCount</strong>
-            <small>en attente</small>
+            <span>Famille</span>
+            <strong>@Model.MemberCount</strong>
+            <small>@Model.PendingInvitationCount invitation(s) en attente</small>
         </div>
     </section>
 
