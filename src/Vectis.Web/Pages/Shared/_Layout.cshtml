@@ -6,9 +6,14 @@
     <title>@ViewData["Title"] - Vectis</title>
     <script type="importmap"></script>
     <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
+    <link rel="apple-touch-icon" href="~/favicon.svg" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="manifest" href="~/manifest.webmanifest" />
     <meta name="theme-color" content="#0f766e" />
+    <meta name="application-name" content="Vectis" />
+    <meta name="apple-mobile-web-app-title" content="Vectis" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 </head>
 <body>
     <svg aria-hidden="true" class="icon-sprite">
@@ -71,6 +76,17 @@
     <footer>
         Vectis est un outil d'organisation. Les durees de conservation sont configurables et ne remplacent pas les recommandations medicales ou sanitaires.
     </footer>
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <nav class="mobile-tabbar" aria-label="Navigation mobile">
+            <a asp-page="/Index"><svg class="icon"><use href="#icon-dashboard" /></svg><span>Tableau</span></a>
+            <a asp-page="/Pumping"><svg class="icon"><use href="#icon-pumping" /></svg><span>Tirage</span></a>
+            <a asp-page="/Stock"><svg class="icon"><use href="#icon-stock" /></svg><span>Stock</span></a>
+            <a asp-page="/Bottle"><svg class="icon"><use href="#icon-bottle" /></svg><span>Biberon</span></a>
+            <a asp-page="/Settings"><svg class="icon"><use href="#icon-settings" /></svg><span>Profil</span></a>
+        </nav>
+    }
 
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
