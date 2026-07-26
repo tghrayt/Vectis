@@ -25,6 +25,35 @@
         <div class="card metric"><span>Biberons en attente</span><strong>@Model.PendingBottleCount</strong></div>
     </section>
 
+    <section class="card operations-card" style="margin-top:16px">
+        <div class="card-head">
+            <div>
+                <h2>Alertes et actions</h2>
+                <p>Priorites du moment pour eviter les pertes et garder le rythme des repas.</p>
+            </div>
+            <span class="pill">@Model.Alerts.Count alerte(s)</span>
+        </div>
+        @if (Model.Alerts.Count == 0)
+        {
+            <div class="timeline-empty">Aucune alerte active. Le stock et les biberons sont sous controle.</div>
+        }
+        else
+        {
+            <div class="alert-grid">
+                @foreach (var alert in Model.Alerts)
+                {
+                    <article class="action-alert @alert.Severity">
+                        <div>
+                            <strong>@alert.Title</strong>
+                            <p>@alert.Message</p>
+                        </div>
+                        <a class="button" href="@alert.Href">@alert.ActionLabel</a>
+                    </article>
+                }
+            </div>
+        }
+    </section>
+
     <section class="dashboard-band" style="margin-top:16px">
         <div class="status-panel @Model.StockHealthClass">
             <span>Etat du stock</span>
@@ -47,6 +76,32 @@
             <small>@Model.PendingInvitationCount invitation(s) en attente</small>
         </div>
     </section>
+
+    @if (Model.PendingBottles.Count > 0)
+    {
+        <section class="card timeline-card" style="margin-top:16px">
+            <div class="card-head">
+                <div>
+                    <h2>Biberons en attente</h2>
+                    <p>Biberons prepares mais pas encore enregistres comme donnes.</p>
+                </div>
+                <a class="button" asp-page="/Feed">Tout voir</a>
+            </div>
+            <div class="pending-bottle-list">
+                @foreach (var bottle in Model.PendingBottles.Take(3))
+                {
+                    <article class="pending-bottle">
+                        <div>
+                            <span class="muted">@bottle.PreparedAt.LocalDateTime.ToString("g")</span>
+                            <strong>@bottle.TotalQuantityMl ml</strong>
+                            <small>@bottle.Sources.Count source(s) - @DisplayLabels.BottleStatus(bottle.Status)</small>
+                        </div>
+                        <a class="button primary" asp-page="/Feed" asp-route-prepared="@bottle.Id">Donner</a>
+                    </article>
+                }
+            </div>
+        </section>
+    }
 
     <section class="grid dashboard-main" style="margin-top:16px">
         <div class="card chart-card">

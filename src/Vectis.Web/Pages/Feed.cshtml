@@ -31,6 +31,11 @@ else
 {
     <form method="post" class="card stack">
         <div asp-validation-summary="All" class="danger"></div>
+        <div class="quick-feed-actions">
+            <button type="button" class="button" data-feed-mode="full">Tout bu</button>
+            <button type="button" class="button" data-feed-mode="partial">Partiel</button>
+            <button type="button" class="button danger-button" data-feed-mode="discard">Non consomme / jeter</button>
+        </div>
         <div class="grid two">
             <label>Biberon prepare
                 <select asp-for="Input.BottleId" data-bottle-select>
@@ -49,28 +54,57 @@ else
                 <select asp-for="Input.Reaction" asp-items="Model.ReactionOptions"></select>
             </label>
             <label>Devenir du reste
-                <input asp-for="Input.LeftoverOutcome" placeholder="jete, conserve, autre..." />
+                <input asp-for="Input.LeftoverOutcome" placeholder="jete, conserve, autre..." data-leftover />
             </label>
         </div>
         <label>Notes <textarea asp-for="Input.Notes"></textarea></label>
-        <button class="primary" type="submit">Enregistrer la consommation</button>
+        <button class="primary" type="submit" data-submit-label>Enregistrer la consommation</button>
     </form>
 
     <script>
         (() => {
             const select = document.querySelector("[data-bottle-select]");
             const consumed = document.querySelector("[data-consumed]");
+            const leftover = document.querySelector("[data-leftover]");
+            const submit = document.querySelector("[data-submit-label]");
+            const modeButtons = document.querySelectorAll("[data-feed-mode]");
+
+            const selectedQuantity = () => {
+                const option = select.selectedOptions[0];
+                return Number(option?.dataset.quantity || 0);
+            };
 
             const refresh = () => {
-                const option = select.selectedOptions[0];
-                const quantity = Number(option?.dataset.quantity || 0);
+                const quantity = selectedQuantity();
                 consumed.max = quantity;
                 if (!consumed.value || Number(consumed.value) > quantity) {
                     consumed.value = quantity;
                 }
             };
 
+            const setMode = (mode) => {
+                const quantity = selectedQuantity();
+                if (mode === "full") {
+                    consumed.value = quantity;
+                    leftover.value = "termine";
+                    submit.textContent = "Enregistrer le biberon donne";
+                }
+
+                if (mode === "partial") {
+                    consumed.value = Math.max(0, Math.round(quantity / 2));
+                    leftover.value = "reste jete";
+                    submit.textContent = "Enregistrer le biberon partiel";
+                }
+
+                if (mode === "discard") {
+                    consumed.value = 0;
+                    leftover.value = "jete";
+                    submit.textContent = "Marquer non consomme";
+                }
+            };
+
             select.addEventListener("change", refresh);
+            modeButtons.forEach(button => button.addEventListener("click", () => setMode(button.dataset.feedMode)));
             refresh();
         })();
     </script>

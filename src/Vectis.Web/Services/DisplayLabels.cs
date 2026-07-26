@@ -60,6 +60,7 @@ public static class DisplayLabels
             "consumed" => "Consomme",
             "partially_consumed" => "Partiellement consomme",
             "not_consumed" => "Non consomme",
+            "expired" => "Expire",
             _ => status
         };
     }

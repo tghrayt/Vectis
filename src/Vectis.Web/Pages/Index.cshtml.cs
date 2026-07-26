@@ -7,6 +7,7 @@ using Vectis.Web.Services;
 namespace Vectis.Web.Pages;
 
 public sealed record DashboardDay(string Label, int PumpedMl, int ConsumedMl, int Feedings);
+public sealed record DashboardAlert(string Severity, string Title, string Message, string ActionLabel, string Href);
 
 [Authorize]
 public sealed class IndexModel : PageModel
@@ -32,6 +33,8 @@ public sealed class IndexModel : PageModel
     public int PendingInvitationCount { get; private set; }
     public int PendingBottleCount { get; private set; }
     public int FeedingCountToday { get; private set; }
+    public IReadOnlyList<PreparedBottle> PendingBottles { get; private set; } = [];
+    public IReadOnlyList<DashboardAlert> Alerts { get; private set; } = [];
     public IReadOnlyList<Feeding> RecentFeedings { get; private set; } = [];
     public IReadOnlyList<PumpingSession> RecentPumpingSessions { get; private set; } = [];
     public IReadOnlyList<DashboardDay> DailyTrend { get; private set; } = [];
@@ -56,14 +59,15 @@ public sealed class IndexModel : PageModel
 
         BabyName = context.Baby.FirstName;
         Summary = await _stockService.GetSummaryAsync(context.User.Id, context.Baby.Id);
+        var availableContainers = await _stockService.GetAvailableContainersAsync(context.User.Id, context.Baby.Id);
         var history = await _historyService.GetAsync(context.User.Id, context.Baby.Id);
         var users = await _familyService.GetUsersAsync(context.Family.Id, context.User.Id);
-        var pendingBottles = await _bottleService.GetPendingAsync(context.User.Id, context.Baby.Id);
+        PendingBottles = await _bottleService.GetPendingAsync(context.User.Id, context.Baby.Id);
         var today = DateTimeOffset.Now.Date;
 
         MemberCount = users.Members.Count;
         PendingInvitationCount = users.Invitations.Count(invitation => invitation.Status == "pending");
-        PendingBottleCount = pendingBottles.Count;
+        PendingBottleCount = PendingBottles.Count;
         FeedingCountToday = history.Feedings.Count(feeding => feeding.StartedAt.ToLocalTime().Date == today);
         RecentFeedings = history.Feedings.Take(5).ToList();
         RecentPumpingSessions = history.PumpingSessions.Take(5).ToList();
@@ -71,6 +75,7 @@ public sealed class IndexModel : PageModel
         MaxDailyVolumeMl = Math.Max(1, DailyTrend.Max(day => Math.Max(day.PumpedMl, day.ConsumedMl)));
         SetStockDistribution(Summary);
         SetStockHealth(Summary);
+        Alerts = BuildAlerts(Summary, availableContainers, PendingBottles, PendingInvitationCount, context.Baby);
         return Page();
     }
 
@@ -133,6 +138,74 @@ public sealed class IndexModel : PageModel
 
         StockHealthLabel = "Stable";
         StockHealthClass = "ok";
+    }
+
+    private static IReadOnlyList<DashboardAlert> BuildAlerts(
+        StockSummary summary,
+        IReadOnlyList<MilkContainer> availableContainers,
+        IReadOnlyList<PreparedBottle> pendingBottles,
+        int pendingInvitationCount,
+        Baby baby)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var alerts = new List<DashboardAlert>();
+        var firstExpiring = availableContainers.FirstOrDefault(container => container.EstimatedExpiresAt <= now.AddHours(24));
+        if (firstExpiring is not null)
+        {
+            alerts.Add(new DashboardAlert(
+                "warning",
+                "Lait bientot expire",
+                $"{summary.ExpiringSoonMl} ml a utiliser avant {firstExpiring.EstimatedExpiresAt.LocalDateTime:g}.",
+                "Preparer avec ce stock",
+                "/Bottle"));
+        }
+
+        if (summary.TotalAvailableMl <= 0)
+        {
+            alerts.Add(new DashboardAlert("danger", "Stock vide", "Aucun lait disponible pour preparer un biberon.", "Ajouter un tirage", "/Pumping"));
+        }
+        else if (summary.EstimatedBottles <= 2 || summary.TotalAvailableMl < baby.UsualBottleMl * 2)
+        {
+            alerts.Add(new DashboardAlert(
+                "warning",
+                "Stock faible",
+                $"Il reste environ {summary.EstimatedBottles} biberon(s) pour {baby.FirstName}.",
+                "Ajouter un tirage",
+                "/Pumping"));
+        }
+
+        var oldBottle = pendingBottles.FirstOrDefault(bottle => now - bottle.PreparedAt >= TimeSpan.FromHours(2));
+        if (oldBottle is not null)
+        {
+            alerts.Add(new DashboardAlert(
+                "danger",
+                "Biberon prepare depuis trop longtemps",
+                $"{oldBottle.TotalQuantityMl} ml prepare a {oldBottle.PreparedAt.LocalDateTime:g}.",
+                "Traiter ce biberon",
+                $"/Feed?prepared={oldBottle.Id}"));
+        }
+        else if (pendingBottles.Count > 0)
+        {
+            var nextBottle = pendingBottles[0];
+            alerts.Add(new DashboardAlert(
+                "info",
+                "Biberon en attente",
+                $"{nextBottle.TotalQuantityMl} ml pret pour le prochain repas.",
+                "Donner maintenant",
+                $"/Feed?prepared={nextBottle.Id}"));
+        }
+
+        if (pendingInvitationCount > 0)
+        {
+            alerts.Add(new DashboardAlert(
+                "info",
+                "Invitation en attente",
+                $"{pendingInvitationCount} personne(s) n'ont pas encore rejoint la famille.",
+                "Voir les utilisateurs",
+                "/Users"));
+        }
+
+        return alerts;
     }
 
     private static int Percent(int value, int total)
