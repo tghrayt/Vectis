@@ -41,7 +41,7 @@ jobs:
       - name: Prepare SSH
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/id_rsa
+          printf '%s' "${{ secrets.VM_SSH_KEY_B64 }}" | base64 -d > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -p "${{ secrets.VM_PORT }}" "${{ secrets.VM_HOST }}" >> ~/.ssh/known_hosts
 
