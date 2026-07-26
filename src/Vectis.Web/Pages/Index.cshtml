@@ -10,19 +10,19 @@
         <p>@Model.BabyName - supervision du stock, des biberons et de la famille.</p>
     </div>
     <div class="toolbar">
-        <a class="button primary" asp-page="/Pumping">Ajouter un tirage</a>
-        <a class="button" asp-page="/Bottle">Preparer un biberon</a>
-        <a class="button" asp-page="/Feed">Donner un biberon</a>
+        <a class="button primary" asp-page="/Pumping"><svg class="icon"><use href="#icon-plus" /></svg>Ajouter un tirage</a>
+        <a class="button" asp-page="/Bottle"><svg class="icon"><use href="#icon-bottle" /></svg>Preparer un biberon</a>
+        <a class="button" asp-page="/Feed"><svg class="icon"><use href="#icon-feed" /></svg>Donner un biberon</a>
     </div>
 </section>
 
 @if (Model.Summary is not null)
 {
     <section class="grid stats">
-        <div class="card metric"><span>Stock disponible</span><strong>@Model.Summary.TotalAvailableMl ml</strong></div>
-        <div class="card metric"><span>Biberons donnes aujourd'hui</span><strong>@Model.FeedingCountToday</strong></div>
-        <div class="card metric"><span>Biberons estimes</span><strong>@Model.Summary.EstimatedBottles</strong></div>
-        <div class="card metric"><span>Biberons en attente</span><strong>@Model.PendingBottleCount</strong></div>
+        <div class="card metric"><span><svg class="icon metric-icon"><use href="#icon-stock" /></svg>Stock disponible</span><strong>@Model.Summary.TotalAvailableMl ml</strong></div>
+        <div class="card metric"><span><svg class="icon metric-icon"><use href="#icon-feed" /></svg>Biberons donnes aujourd'hui</span><strong>@Model.FeedingCountToday</strong></div>
+        <div class="card metric"><span><svg class="icon metric-icon"><use href="#icon-bottle" /></svg>Biberons estimes</span><strong>@Model.Summary.EstimatedBottles</strong></div>
+        <div class="card metric"><span><svg class="icon metric-icon"><use href="#icon-alert" /></svg>Biberons en attente</span><strong>@Model.PendingBottleCount</strong></div>
     </section>
 
     <section class="card operations-card" style="margin-top:16px">
@@ -43,11 +43,12 @@
                 @foreach (var alert in Model.Alerts)
                 {
                     <article class="action-alert @alert.Severity">
+                        <svg class="icon alert-icon"><use href="#icon-alert" /></svg>
                         <div>
                             <strong>@alert.Title</strong>
                             <p>@alert.Message</p>
                         </div>
-                        <a class="button" href="@alert.Href">@alert.ActionLabel</a>
+                        <a class="button" href="@alert.Href">@alert.ActionLabel<svg class="icon"><use href="#icon-arrow" /></svg></a>
                     </article>
                 }
             </div>
@@ -85,7 +86,7 @@
                     <h2>Biberons en attente</h2>
                     <p>Biberons prepares mais pas encore enregistres comme donnes.</p>
                 </div>
-                <a class="button" asp-page="/Feed">Tout voir</a>
+                <a class="button" asp-page="/Feed">Tout voir<svg class="icon"><use href="#icon-arrow" /></svg></a>
             </div>
             <div class="pending-bottle-list">
                 @foreach (var bottle in Model.PendingBottles.Take(3))
@@ -96,7 +97,7 @@
                             <strong>@bottle.TotalQuantityMl ml</strong>
                             <small>@bottle.Sources.Count source(s) - @DisplayLabels.BottleStatus(bottle.Status)</small>
                         </div>
-                        <a class="button primary" asp-page="/Feed" asp-route-prepared="@bottle.Id">Donner</a>
+                        <a class="button primary" asp-page="/Feed" asp-route-prepared="@bottle.Id"><svg class="icon"><use href="#icon-feed" /></svg>Donner</a>
                     </article>
                 }
             </div>
@@ -178,7 +179,7 @@
                 <h2>Priorite operationnelle</h2>
                 <p>Le contenant recommande suit la logique premier expire, premier utilise.</p>
             </div>
-            <a class="button" asp-page="/Stock">Voir le stock</a>
+            <a class="button" asp-page="/Stock"><svg class="icon"><use href="#icon-stock" /></svg>Voir le stock</a>
         </div>
         @if (Model.Summary.NextRecommended is null)
         {

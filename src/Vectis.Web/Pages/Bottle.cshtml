@@ -9,7 +9,7 @@
         <h1>Preparer un biberon</h1>
         <p>Choisis le lait utilise. Le biberon restera en attente jusqu'au repas.</p>
     </div>
-    <a class="button" asp-page="/Feed">Donner un biberon</a>
+    <a class="button" asp-page="/Feed"><svg class="icon"><use href="#icon-feed" /></svg>Donner un biberon</a>
 </section>
 
 @if (Model.Containers.Count == 0)
@@ -17,7 +17,7 @@
     <div class="card notice stack">
         <h2>Aucun lait disponible</h2>
         <p>Ajoute d'abord un tirage pour creer du stock utilisable.</p>
-        <a class="button primary" asp-page="/Pumping">Ajouter un tirage</a>
+        <a class="button primary" asp-page="/Pumping"><svg class="icon"><use href="#icon-plus" /></svg>Ajouter un tirage</a>
     </div>
 }
 else
@@ -65,7 +65,7 @@ else
         <section class="card stack">
             <h2>Details</h2>
             <label>Notes <textarea asp-for="Input.Notes"></textarea></label>
-            <button class="primary" type="submit">Preparer le biberon</button>
+            <button class="primary" type="submit"><svg class="icon"><use href="#icon-bottle" /></svg>Preparer le biberon</button>
         </section>
     </form>
 

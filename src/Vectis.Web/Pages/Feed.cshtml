@@ -9,7 +9,7 @@
         <h1>Donner un biberon</h1>
         <p>Selectionne un biberon prepare, puis note ce que bebe a bu.</p>
     </div>
-    <a class="button" asp-page="/Bottle">Preparer un biberon</a>
+    <a class="button" asp-page="/Bottle"><svg class="icon"><use href="#icon-bottle" /></svg>Preparer un biberon</a>
 </section>
 
 @if (Model.BottlePrepared)
@@ -24,7 +24,7 @@
     <div class="card notice stack">
         <h2>Aucun biberon en attente</h2>
         <p>Prepare d'abord un biberon depuis le stock.</p>
-        <a class="button primary" asp-page="/Bottle">Preparer un biberon</a>
+        <a class="button primary" asp-page="/Bottle"><svg class="icon"><use href="#icon-bottle" /></svg>Preparer un biberon</a>
     </div>
 }
 else
@@ -32,9 +32,9 @@ else
     <form method="post" class="card stack">
         <div asp-validation-summary="All" class="danger"></div>
         <div class="quick-feed-actions">
-            <button type="button" class="button" data-feed-mode="full">Tout bu</button>
-            <button type="button" class="button" data-feed-mode="partial">Partiel</button>
-            <button type="button" class="button danger-button" data-feed-mode="discard">Non consomme / jeter</button>
+            <button type="button" class="button" data-feed-mode="full"><svg class="icon"><use href="#icon-check" /></svg>Tout bu</button>
+            <button type="button" class="button" data-feed-mode="partial"><svg class="icon"><use href="#icon-half" /></svg>Partiel</button>
+            <button type="button" class="button danger-button" data-feed-mode="discard"><svg class="icon"><use href="#icon-trash" /></svg>Non consomme / jeter</button>
         </div>
         <div class="grid two">
             <label>Biberon prepare
@@ -58,7 +58,7 @@ else
             </label>
         </div>
         <label>Notes <textarea asp-for="Input.Notes"></textarea></label>
-        <button class="primary" type="submit" data-submit-label>Enregistrer la consommation</button>
+        <button class="primary" type="submit" data-submit-label><svg class="icon"><use href="#icon-feed" /></svg><span data-submit-text>Enregistrer la consommation</span></button>
     </form>
 
     <script>
@@ -67,6 +67,7 @@ else
             const consumed = document.querySelector("[data-consumed]");
             const leftover = document.querySelector("[data-leftover]");
             const submit = document.querySelector("[data-submit-label]");
+            const submitText = document.querySelector("[data-submit-text]");
             const modeButtons = document.querySelectorAll("[data-feed-mode]");
 
             const selectedQuantity = () => {
@@ -87,19 +88,19 @@ else
                 if (mode === "full") {
                     consumed.value = quantity;
                     leftover.value = "termine";
-                    submit.textContent = "Enregistrer le biberon donne";
+                    submitText.textContent = "Enregistrer le biberon donne";
                 }
 
                 if (mode === "partial") {
                     consumed.value = Math.max(0, Math.round(quantity / 2));
                     leftover.value = "reste jete";
-                    submit.textContent = "Enregistrer le biberon partiel";
+                    submitText.textContent = "Enregistrer le biberon partiel";
                 }
 
                 if (mode === "discard") {
                     consumed.value = 0;
                     leftover.value = "jete";
-                    submit.textContent = "Marquer non consomme";
+                    submitText.textContent = "Marquer non consomme";
                 }
             };
 
