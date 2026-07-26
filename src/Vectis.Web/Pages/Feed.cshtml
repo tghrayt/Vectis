@@ -36,7 +36,7 @@ else
             {
                 <article class="feed-queue-item @bottle.PriorityClass" data-queue-card="@bottle.Id">
                     <span class="pill @bottle.PriorityClass">@bottle.PriorityLabel</span>
-                    <strong>@bottle.TotalQuantityMl ml</strong>
+                    <strong>@bottle.DisplayName - @bottle.TotalQuantityMl ml</strong>
                     <small>@bottle.AgeLabel - @bottle.SourceCount source(s)</small>
                 </article>
             }
@@ -73,10 +73,11 @@ else
                                     data-quantity="@bottle.TotalQuantityMl"
                                     data-priority="@bottle.PriorityLabel"
                                     data-priority-class="@bottle.PriorityClass"
+                                    data-name="@bottle.DisplayName"
                                     data-age="@bottle.AgeLabel"
                                     data-prepared="@bottle.PreparedLabel"
                                     data-sources="@bottle.SourceCount">
-                                @bottle.PreparedLabel - @bottle.TotalQuantityMl ml - @bottle.SourceCount source(s)
+                                @bottle.DisplayName - @bottle.PreparedLabel - @bottle.TotalQuantityMl ml - @bottle.SourceCount source(s)
                             </option>
                         }
                     </select>
@@ -135,7 +136,7 @@ else
                 const quantity = selectedQuantity();
                 selectedPriority.textContent = option?.dataset.priority || "Pret";
                 selectedPriority.className = `pill ${option?.dataset.priorityClass || "ok"}`;
-                selectedTitle.textContent = `${quantity} ml prepares`;
+                selectedTitle.textContent = `${option?.dataset.name || "Biberon"} - ${quantity} ml prepares`;
                 selectedMeta.textContent = `${option?.dataset.age || ""} - prepare le ${option?.dataset.prepared || ""}`;
                 queueCards.forEach(card => card.classList.toggle("active", card.dataset.queueCard === select.value));
             };

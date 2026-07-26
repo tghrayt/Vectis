@@ -10,7 +10,7 @@ namespace Vectis.Web.Pages;
 
 public sealed record PendingBottleOption(
     Guid Id,
-    string ShortId,
+    string DisplayName,
     int TotalQuantityMl,
     int SourceCount,
     string PreparedLabel,
@@ -97,7 +97,7 @@ public sealed class FeedModel : PageModel
     private async Task LoadAsync(CurrentContext context)
     {
         PendingBottles = await _bottleService.GetPendingAsync(context.User.Id, context.Baby!.Id);
-        PendingOptions = PendingBottles.Select(BuildPendingOption).ToList();
+        PendingOptions = PendingBottles.Select((bottle, index) => BuildPendingOption(bottle, index + 1)).ToList();
         SelectedBottle = PendingOptions.FirstOrDefault();
     }
 
@@ -106,7 +106,7 @@ public sealed class FeedModel : PageModel
         SelectedBottle = PendingOptions.FirstOrDefault(option => option.Id == bottleId) ?? PendingOptions.FirstOrDefault();
     }
 
-    private static PendingBottleOption BuildPendingOption(PreparedBottle bottle)
+    private static PendingBottleOption BuildPendingOption(PreparedBottle bottle, int position)
     {
         var age = DateTimeOffset.UtcNow - bottle.PreparedAt;
         var priorityLabel = "Pret";
@@ -125,7 +125,7 @@ public sealed class FeedModel : PageModel
 
         return new PendingBottleOption(
             bottle.Id,
-            bottle.Id.ToString()[..8],
+            $"Biberon {position}",
             bottle.TotalQuantityMl,
             bottle.Sources.Count,
             bottle.PreparedAt.LocalDateTime.ToString("g"),

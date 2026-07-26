@@ -9,7 +9,7 @@ namespace Vectis.Web.Pages;
 
 public sealed record BottleSourceOption(
     Guid Id,
-    string ShortId,
+    string DisplayName,
     int RemainingQuantityMl,
     string LocationLabel,
     string StatusLabel,
@@ -101,10 +101,11 @@ public sealed class BottleModel : PageModel
         Containers = await _stockService.GetAvailableContainersAsync(context.User.Id, context.Baby.Id);
         TotalAvailableMl = Containers.Sum(container => container.RemainingQuantityMl);
         AvailableBottleCount = UsualBottleMl <= 0 ? 0 : TotalAvailableMl / UsualBottleMl;
-        RecommendedSourceLabel = Containers.Count == 0
+        SourceOptions = Containers.Select((container, index) => BuildSourceOption(container, index + 1)).ToList();
+        var recommended = SourceOptions.FirstOrDefault();
+        RecommendedSourceLabel = recommended is null
             ? "Aucun contenant prioritaire"
-            : $"{Containers[0].Id.ToString()[..8]} - {Containers[0].RemainingQuantityMl} ml - exp {Containers[0].EstimatedExpiresAt.LocalDateTime:g}";
-        SourceOptions = Containers.Select(BuildSourceOption).ToList();
+            : $"{recommended.DisplayName} - {recommended.RemainingQuantityMl} ml - exp {recommended.ExpirationLabel}";
     }
 
     private void PrefillSources()
@@ -131,7 +132,7 @@ public sealed class BottleModel : PageModel
         }
     }
 
-    private static BottleSourceOption BuildSourceOption(MilkContainer container)
+    private static BottleSourceOption BuildSourceOption(MilkContainer container, int position)
     {
         var remaining = container.EstimatedExpiresAt - DateTimeOffset.UtcNow;
         var priorityLabel = "Stable";
@@ -150,7 +151,7 @@ public sealed class BottleModel : PageModel
 
         return new BottleSourceOption(
             container.Id,
-            container.Id.ToString()[..8],
+            position == 1 ? "Source prioritaire" : $"Source {position}",
             container.RemainingQuantityMl,
             DisplayLabels.Location(container.Location),
             DisplayLabels.MilkStatus(container.Status),

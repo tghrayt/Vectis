@@ -9,6 +9,7 @@ namespace Vectis.Web.Pages;
 public sealed record StockFilter(string Key, string Label, int Count);
 public sealed record StockRow(
     MilkContainer Container,
+    string DisplayName,
     string Priority,
     string PriorityClass,
     string ExpirationLabel,
@@ -47,7 +48,7 @@ public sealed class StockModel : PageModel
         Filters = BuildFilters(Containers);
         Rows = Containers
             .Where(container => MatchesFilter(container, ActiveFilter))
-            .Select(BuildRow)
+            .Select((container, index) => BuildRow(container, index + 1))
             .ToList();
         return Page();
     }
@@ -83,7 +84,7 @@ public sealed class StockModel : PageModel
         };
     }
 
-    private static StockRow BuildRow(MilkContainer container)
+    private static StockRow BuildRow(MilkContainer container, int position)
     {
         var now = DateTimeOffset.UtcNow;
         var remaining = container.EstimatedExpiresAt - now;
@@ -106,7 +107,7 @@ public sealed class StockModel : PageModel
             priorityClass = "warning";
         }
 
-        return new StockRow(container, priority, priorityClass, FormatRemaining(remaining), FormatAge(elapsed), progress);
+        return new StockRow(container, $"Contenant {position}", priority, priorityClass, FormatRemaining(remaining), FormatAge(elapsed), progress);
     }
 
     private static string FormatRemaining(TimeSpan remaining)

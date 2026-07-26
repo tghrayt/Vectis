@@ -40,6 +40,7 @@ public sealed class IndexModel : PageModel
     public IReadOnlyList<PumpingSession> RecentPumpingSessions { get; private set; } = [];
     public IReadOnlyList<DashboardDay> DailyTrend { get; private set; } = [];
     public DashboardAction? RecommendedAction { get; private set; }
+    public string NextContainerName { get; private set; } = "Aucun contenant";
     public string NextContainerLabel { get; private set; } = "Aucun";
     public string NextContainerExpiresLabel { get; private set; } = "-";
     public int IntakeBalanceTodayMl { get; private set; }
@@ -155,6 +156,7 @@ public sealed class IndexModel : PageModel
             return;
         }
 
+        NextContainerName = "Contenant prioritaire";
         NextContainerLabel = $"{DisplayLabels.Location(summary.NextRecommended.Location)} - {summary.NextRecommended.RemainingQuantityMl} ml";
         NextContainerExpiresLabel = summary.NextRecommended.EstimatedExpiresAt.LocalDateTime.ToString("g");
     }

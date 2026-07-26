@@ -39,7 +39,7 @@ else
             {
                 <div class="source-priority-row">
                     <span class="pill @option.PriorityClass">@option.PriorityLabel</span>
-                    <strong>@option.ShortId - @option.RemainingQuantityMl ml</strong>
+                    <strong>@option.DisplayName - @option.RemainingQuantityMl ml</strong>
                     <small>@option.LocationLabel - exp @option.ExpirationLabel</small>
                 </div>
             }
@@ -65,7 +65,7 @@ else
                         @foreach (var option in Model.SourceOptions)
                         {
                             <option value="@option.Id" data-quantity="@option.RemainingQuantityMl">
-                                @option.ShortId - @option.RemainingQuantityMl ml - @option.LocationLabel - exp @option.ExpirationLabel
+                                @option.DisplayName - @option.RemainingQuantityMl ml - @option.LocationLabel - exp @option.ExpirationLabel
                             </option>
                         }
                     </select>
@@ -79,7 +79,7 @@ else
                         @foreach (var option in Model.SourceOptions)
                         {
                             <option value="@option.Id" data-quantity="@option.RemainingQuantityMl">
-                                @option.ShortId - @option.RemainingQuantityMl ml - @option.LocationLabel - exp @option.ExpirationLabel
+                                @option.DisplayName - @option.RemainingQuantityMl ml - @option.LocationLabel - exp @option.ExpirationLabel
                             </option>
                         }
                     </select>
