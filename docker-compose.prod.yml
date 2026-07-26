@@ -30,13 +30,31 @@ services:
       Smtp__FromEmail: ${SMTP_FROM_EMAIL:-}
       Smtp__FromName: ${SMTP_FROM_NAME:-Vectis}
       Smtp__EnableSsl: ${SMTP_ENABLE_SSL:-true}
+    networks:
+      - vectis
+
+  vectis-proxy:
+    image: caddy:2
+    container_name: vectis-proxy
+    restart: unless-stopped
+    depends_on:
+      - vectis-web
+    environment:
+      APP_HOST: ${APP_HOST:-51-210-40-78.sslip.io}
     ports:
-      - "${APP_PORT:-8080}:8080"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - vectis_caddy_data:/data
+      - vectis_caddy_config:/config
     networks:
       - vectis
 
 volumes:
   vectis_postgres_data:
+  vectis_caddy_data:
+  vectis_caddy_config:
 
 networks:
   vectis:

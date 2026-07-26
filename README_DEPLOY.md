@@ -8,14 +8,17 @@ Ce deploiement cible une VM Ubuntu avec Docker et Docker Compose deja installes.
 - GitHub Actions construit une image Docker `vectis-app`.
 - L'image est copiee sur la VM en SSH puis chargee avec `docker load`.
 - `docker compose` demarre :
-  - `vectis-web` sur le port public `8080` par defaut ;
+  - `vectis-proxy`, un reverse proxy Caddy public en `80/443` ;
+  - `vectis-web`, accessible uniquement dans le reseau Docker ;
   - `vectis-db`, un PostgreSQL dedie a Vectis, non expose publiquement.
 
-URL temporaire sans domaine :
+URL temporaire HTTPS sans domaine OVH :
 
 ```text
-http://51.210.40.78:8080
+https://51-210-40-78.sslip.io
 ```
+
+`sslip.io` fournit un DNS temporaire qui pointe automatiquement vers l'IP integree dans le nom d'hote.
 
 ## Preparation VM
 
@@ -83,7 +86,7 @@ SMTP_FROM_EMAIL=
 Variables GitHub optionnelles :
 
 ```text
-APP_PORT=8080
+APP_HOST=51-210-40-78.sslip.io
 SMTP_ENABLED=false
 SMTP_PORT=587
 SMTP_FROM_NAME=Vectis
@@ -103,7 +106,7 @@ Tu peux aussi le lancer manuellement :
 Sur ton PC :
 
 ```bash
-curl http://51.210.40.78:8080/health
+curl https://51-210-40-78.sslip.io/health
 ```
 
 Sur la VM :
@@ -137,13 +140,25 @@ Sauvegarder PostgreSQL :
 docker exec vectis-db pg_dump -U vectis vectis > vectis-backup.sql
 ```
 
-## Domaine et HTTPS
+## Securiser PostgreSQL existant
 
-Pour l'instant, l'application est prevue en HTTP par IP.
+Le PostgreSQL dedie a Vectis (`vectis-db`) n'est pas expose publiquement.
 
-Quand le domaine sera pret, on ajoutera :
+Si un ancien conteneur `postgres-db` expose encore `0.0.0.0:5432`, verifie d'abord son usage :
 
-- Caddy ou Nginx ;
-- certificat Let's Encrypt ;
-- redirection HTTPS ;
-- exposition publique sur `80` et `443` au lieu de `8080`.
+```bash
+docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Ports}}"
+docker inspect postgres-db --format '{{ index .Config.Labels "com.docker.compose.project.working_dir" }}'
+```
+
+Si ce Postgres etait seulement un laboratoire et n'a pas besoin d'etre public, il faudra le recreer sans publication publique, ou avec `127.0.0.1:5432:5432`.
+
+## Domaine definitif
+
+Pour l'instant, l'application utilise HTTPS avec `sslip.io`.
+
+Quand le domaine OVH sera pret, il suffira de :
+
+- creer un `A record` vers `51.210.40.78` ;
+- remplacer `APP_HOST=51-210-40-78.sslip.io` par ton domaine ;
+- relancer le workflow GitHub Actions.

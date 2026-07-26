@@ -53,7 +53,7 @@ jobs:
       - name: Copy deployment files
         run: |
           ssh -p "${{ secrets.VM_PORT }}" "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}" "sudo mkdir -p /opt/vectis && sudo chown ${{ secrets.VM_USER }}:${{ secrets.VM_USER }} /opt/vectis"
-          scp -P "${{ secrets.VM_PORT }}" docker-compose.prod.yml vectis-app.tar.gz "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:/opt/vectis/"
+          scp -P "${{ secrets.VM_PORT }}" docker-compose.prod.yml Caddyfile vectis-app.tar.gz "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:/opt/vectis/"
 
       - name: Deploy on VM
         run: |
@@ -63,7 +63,7 @@ jobs:
 
           cat > .env << 'ENVEOF'
           IMAGE_TAG=${{ github.sha }}
-          APP_PORT=${{ vars.APP_PORT || '8080' }}
+          APP_HOST=${{ vars.APP_HOST || '51-210-40-78.sslip.io' }}
           POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
           SMTP_ENABLED=${{ vars.SMTP_ENABLED || 'false' }}
           SMTP_HOST=${{ secrets.SMTP_HOST }}
@@ -83,5 +83,11 @@ jobs:
 
       - name: Smoke test
         run: |
-          sleep 10
-          curl --fail --show-error --max-time 20 "http://${{ secrets.VM_HOST }}:${{ vars.APP_PORT || '8080' }}/health"
+          for attempt in {1..18}; do
+            if curl --fail --show-error --max-time 20 "https://${{ vars.APP_HOST || '51-210-40-78.sslip.io' }}/health"; then
+              exit 0
+            fi
+            echo "Waiting for HTTPS health check... attempt ${attempt}/18"
+            sleep 10
+          done
+          exit 1
