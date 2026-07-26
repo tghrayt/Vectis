@@ -23,6 +23,9 @@ internal sealed class BusinessRuleTests
         CancelledInvitationCannotBeAccepted();
         StockReadRequiresFamilyAccess();
         HistoryReadRequiresFamilyAccess();
+        StockContainerCanMoveAndAdjust();
+        StockContainerCannotBeAdjustedAboveInitial();
+        StockContainerCanBeDiscarded();
     }
 
     private void PumpingContainersCannotExceedTotal()
@@ -187,6 +190,50 @@ internal sealed class BusinessRuleTests
         var history = service.GetAsync(admin.Id, baby.Id).GetAwaiter().GetResult();
         Equal(false, history.AuditEntries.Any(item => item.UserId == outsider.Id));
         Equal(true, history.AuditEntries.Any(item => item.UserId == admin.Id));
+    }
+
+    private void StockContainerCanMoveAndAdjust()
+    {
+        var (state, user, baby) = CreateReadyState();
+        _engine.AddPumpingSession(state, user.Id, baby.Id, DateTimeOffset.UtcNow, 100, null, "both", "",
+        [
+            new(ContainerType.StorageBag, 100, StorageLocation.Refrigerator, "")
+        ]);
+
+        var container = _engine.AvailableContainers(state, baby.Id).Single();
+        var moved = _engine.MoveContainer(state, user.Id, baby.Id, container.Id, StorageLocation.SeparateFreezer, "Reserve");
+        Equal(StorageLocation.SeparateFreezer, moved.Location);
+        Equal(MilkStatus.Frozen, moved.Status);
+
+        var adjusted = _engine.AdjustContainerQuantity(state, user.Id, baby.Id, container.Id, 70, "Correction");
+        Equal(70, adjusted.RemainingQuantityMl);
+    }
+
+    private void StockContainerCannotBeAdjustedAboveInitial()
+    {
+        var (state, user, baby) = CreateReadyState();
+        _engine.AddPumpingSession(state, user.Id, baby.Id, DateTimeOffset.UtcNow, 100, null, "both", "",
+        [
+            new(ContainerType.StorageBag, 100, StorageLocation.Refrigerator, "")
+        ]);
+
+        var container = _engine.AvailableContainers(state, baby.Id).Single();
+        Throws(() => _engine.AdjustContainerQuantity(state, user.Id, baby.Id, container.Id, 120, "Erreur"));
+    }
+
+    private void StockContainerCanBeDiscarded()
+    {
+        var (state, user, baby) = CreateReadyState();
+        _engine.AddPumpingSession(state, user.Id, baby.Id, DateTimeOffset.UtcNow, 100, null, "both", "",
+        [
+            new(ContainerType.StorageBag, 100, StorageLocation.Refrigerator, "")
+        ]);
+
+        var container = _engine.AvailableContainers(state, baby.Id).Single();
+        var discarded = _engine.MarkContainerStatus(state, user.Id, baby.Id, container.Id, MilkStatus.Discarded, "Erreur de saisie");
+        Equal(0, discarded.RemainingQuantityMl);
+        Equal(MilkStatus.Discarded, discarded.Status);
+        Equal(0, _engine.AvailableContainers(state, baby.Id).Count);
     }
 
     private static FamilyInvitation Invite(AppState state, Guid adminUserId, Guid familyId, string email, UserRole role)

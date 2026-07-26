@@ -240,6 +240,69 @@ public sealed class VectisEngine
             .ToList();
     }
 
+    public MilkContainer MoveContainer(AppState state, Guid userId, Guid babyId, Guid containerId, StorageLocation location, string comment)
+    {
+        var baby = RequireBaby(state, babyId);
+        EnsureFamilyAccess(state, userId, baby.FamilyId);
+        var index = RequireContainerIndex(state, containerId, babyId);
+        var container = state.Containers[index];
+        EnsureAvailable(container);
+
+        var status = StatusForLocation(location);
+        var moved = container with
+        {
+            Location = location,
+            Status = status,
+            EstimatedExpiresAt = EstimateExpiration(state, Now(), location)
+        };
+
+        state.Containers[index] = moved;
+        state.StockMovements.Add(new StockMovement(Guid.NewGuid(), container.Id, container.Location, location, container.Status, status, Now(), userId, CleanComment(comment, "Deplacement du contenant")));
+        Audit(state, userId, "move", nameof(MilkContainer), container.Id, DisplayLabelsForAudit(container.Location), DisplayLabelsForAudit(location));
+        return moved;
+    }
+
+    public MilkContainer AdjustContainerQuantity(AppState state, Guid userId, Guid babyId, Guid containerId, int remainingQuantityMl, string comment)
+    {
+        var baby = RequireBaby(state, babyId);
+        EnsureFamilyAccess(state, userId, baby.FamilyId);
+        var index = RequireContainerIndex(state, containerId, babyId);
+        var container = state.Containers[index];
+        EnsureAvailable(container);
+
+        if (remainingQuantityMl < 0 || remainingQuantityMl > container.InitialQuantityMl)
+        {
+            throw new InvalidOperationException("La quantite restante doit rester entre 0 ml et la quantite initiale.");
+        }
+
+        var status = remainingQuantityMl == 0 ? MilkStatus.Consumed : StatusForLocation(container.Location);
+        var adjusted = container with { RemainingQuantityMl = remainingQuantityMl, Status = status };
+        state.Containers[index] = adjusted;
+        state.StockMovements.Add(new StockMovement(Guid.NewGuid(), container.Id, container.Location, container.Location, container.Status, status, Now(), userId, CleanComment(comment, $"Ajustement a {remainingQuantityMl} ml")));
+        Audit(state, userId, "adjust", nameof(MilkContainer), container.Id, $"{container.RemainingQuantityMl} ml", $"{remainingQuantityMl} ml");
+        return adjusted;
+    }
+
+    public MilkContainer MarkContainerStatus(AppState state, Guid userId, Guid babyId, Guid containerId, MilkStatus status, string comment)
+    {
+        var baby = RequireBaby(state, babyId);
+        EnsureFamilyAccess(state, userId, baby.FamilyId);
+        var index = RequireContainerIndex(state, containerId, babyId);
+        var container = state.Containers[index];
+        EnsureAvailable(container);
+
+        if (status is not (MilkStatus.Discarded or MilkStatus.Expired))
+        {
+            throw new InvalidOperationException("Ce changement de statut n'est pas disponible depuis le stock.");
+        }
+
+        var updated = container with { RemainingQuantityMl = 0, Status = status };
+        state.Containers[index] = updated;
+        state.StockMovements.Add(new StockMovement(Guid.NewGuid(), container.Id, container.Location, container.Location, container.Status, status, Now(), userId, CleanComment(comment, status == MilkStatus.Discarded ? "Contenant jete" : "Contenant marque expire")));
+        Audit(state, userId, "status", nameof(MilkContainer), container.Id, container.Status.ToString(), status.ToString());
+        return updated;
+    }
+
     public void SeedDemo(AppState state, string passwordHash)
     {
         if (state.Users.Count > 0)
@@ -290,6 +353,45 @@ public sealed class VectisEngine
     {
         return state.Containers.FirstOrDefault(container => container.Id == containerId)
             ?? throw new InvalidOperationException("Contenant introuvable.");
+    }
+
+    private static int RequireContainerIndex(AppState state, Guid containerId, Guid babyId)
+    {
+        var index = state.Containers.FindIndex(container => container.Id == containerId && container.BabyId == babyId);
+        if (index < 0)
+        {
+            throw new InvalidOperationException("Contenant introuvable.");
+        }
+
+        return index;
+    }
+
+    private static void EnsureAvailable(MilkContainer container)
+    {
+        if (!IsAvailable(container))
+        {
+            throw new InvalidOperationException("Ce contenant n'est plus disponible.");
+        }
+    }
+
+    private static MilkStatus StatusForLocation(StorageLocation location)
+    {
+        return location switch
+        {
+            StorageLocation.Refrigerator => MilkStatus.Refrigerated,
+            StorageLocation.FridgeFreezerCompartment or StorageLocation.SeparateFreezer => MilkStatus.Frozen,
+            _ => MilkStatus.FreshlyPumped
+        };
+    }
+
+    private static string CleanComment(string comment, string fallback)
+    {
+        return string.IsNullOrWhiteSpace(comment) ? fallback : comment.Trim();
+    }
+
+    private static string DisplayLabelsForAudit(StorageLocation location)
+    {
+        return location.ToString();
     }
 
     private static void EnsureFamilyAccess(AppState state, Guid userId, Guid familyId)

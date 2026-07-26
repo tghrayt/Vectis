@@ -1494,3 +1494,52 @@ td {
   .settings-metrics div { border-bottom: 1px solid var(--line); }
   .settings-metrics div:last-child { border-bottom: 0; }
 }
+
+.stock-manage {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.stock-manage summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.stock-manage-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.stock-mini-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .72);
+}
+
+.stock-terminal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.stock-terminal-actions form {
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .stock-manage-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stock-terminal-actions {
+    flex-direction: column;
+  }
+}

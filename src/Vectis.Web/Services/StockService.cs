@@ -2,6 +2,10 @@ using Vectis.Domain;
 
 namespace Vectis.Web.Services;
 
+public sealed record MoveStockContainerCommand(Guid UserId, Guid BabyId, Guid ContainerId, StorageLocation Location, string Comment);
+public sealed record AdjustStockContainerCommand(Guid UserId, Guid BabyId, Guid ContainerId, int RemainingQuantityMl, string Comment);
+public sealed record MarkStockContainerCommand(Guid UserId, Guid BabyId, Guid ContainerId, MilkStatus Status, string Comment);
+
 public sealed class StockService
 {
     private readonly IAppStore _store;
@@ -25,6 +29,21 @@ public sealed class StockService
         var state = await _store.LoadAsync();
         EnsureBabyAccess(state, userId, babyId);
         return _engine.AvailableContainers(state, babyId);
+    }
+
+    public Task<MilkContainer> MoveContainerAsync(MoveStockContainerCommand command)
+    {
+        return _store.MutateAsync(state => _engine.MoveContainer(state, command.UserId, command.BabyId, command.ContainerId, command.Location, command.Comment));
+    }
+
+    public Task<MilkContainer> AdjustContainerAsync(AdjustStockContainerCommand command)
+    {
+        return _store.MutateAsync(state => _engine.AdjustContainerQuantity(state, command.UserId, command.BabyId, command.ContainerId, command.RemainingQuantityMl, command.Comment));
+    }
+
+    public Task<MilkContainer> MarkContainerAsync(MarkStockContainerCommand command)
+    {
+        return _store.MutateAsync(state => _engine.MarkContainerStatus(state, command.UserId, command.BabyId, command.ContainerId, command.Status, command.Comment));
     }
 
     private static void EnsureBabyAccess(AppState state, Guid userId, Guid babyId)

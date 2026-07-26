@@ -41,6 +41,15 @@
     </section>
 }
 
+<div asp-validation-summary="All" class="danger"></div>
+
+@if (Model.ActionStatusMessage is not null)
+{
+    <div class="card notice" style="margin-bottom:16px">
+        <p>@Model.ActionStatusMessage</p>
+    </div>
+}
+
 <nav class="filter-tabs" aria-label="Filtres du stock">
     @foreach (var filter in Model.Filters)
     {
@@ -101,6 +110,51 @@ else
                     <a class="button primary" asp-page="/Bottle"><svg class="icon"><use href="#icon-bottle" /></svg>Preparer</a>
                     <a class="button" asp-page="/History"><svg class="icon"><use href="#icon-history" /></svg>Historique</a>
                 </div>
+
+                <details class="stock-manage">
+                    <summary>Gerer ce contenant</summary>
+                    <div class="stock-manage-grid">
+                        <form method="post" asp-page-handler="Move" class="stock-mini-form">
+                            <input type="hidden" name="Input.ContainerId" value="@row.Container.Id" />
+                            <input type="hidden" name="Input.Filter" value="@Model.ActiveFilter" />
+                            <label>Deplacer
+                                <select name="Input.Location">
+                                    @foreach (var option in Model.LocationOptions)
+                                    {
+                                        <option value="@option.Value" selected="@(option.Value == row.Container.Location.ToString())">@option.Text</option>
+                                    }
+                                </select>
+                            </label>
+                            <input name="Input.Comment" placeholder="Commentaire facultatif" />
+                            <button type="submit"><svg class="icon"><use href="#icon-check" /></svg>Valider</button>
+                        </form>
+
+                        <form method="post" asp-page-handler="Adjust" class="stock-mini-form">
+                            <input type="hidden" name="Input.ContainerId" value="@row.Container.Id" />
+                            <input type="hidden" name="Input.Filter" value="@Model.ActiveFilter" />
+                            <label>Quantite restante
+                                <input name="Input.RemainingQuantityMl" type="number" min="0" max="@row.Container.InitialQuantityMl" value="@row.Container.RemainingQuantityMl" />
+                            </label>
+                            <input name="Input.Comment" placeholder="Raison de l'ajustement" />
+                            <button type="submit"><svg class="icon"><use href="#icon-check" /></svg>Ajuster</button>
+                        </form>
+                    </div>
+
+                    <div class="stock-terminal-actions">
+                        <form method="post" asp-page-handler="Discard">
+                            <input type="hidden" name="Input.ContainerId" value="@row.Container.Id" />
+                            <input type="hidden" name="Input.Filter" value="@Model.ActiveFilter" />
+                            <input type="hidden" name="Input.Comment" value="Jete depuis le stock" />
+                            <button class="danger-button" type="submit"><svg class="icon"><use href="#icon-trash" /></svg>Marquer jete</button>
+                        </form>
+                        <form method="post" asp-page-handler="Expire">
+                            <input type="hidden" name="Input.ContainerId" value="@row.Container.Id" />
+                            <input type="hidden" name="Input.Filter" value="@Model.ActiveFilter" />
+                            <input type="hidden" name="Input.Comment" value="Marque expire depuis le stock" />
+                            <button type="submit"><svg class="icon"><use href="#icon-alert" /></svg>Marquer expire</button>
+                        </form>
+                    </div>
+                </details>
             </article>
         }
     </section>

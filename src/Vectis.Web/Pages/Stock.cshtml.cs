@@ -1,6 +1,8 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Vectis.Domain;
 using Vectis.Web.Services;
 
@@ -33,8 +35,15 @@ public sealed class StockModel : PageModel
     public IReadOnlyList<StockFilter> Filters { get; private set; } = [];
     public StockSummary? Summary { get; private set; }
     public string ActiveFilter { get; private set; } = "all";
+    public string? ActionStatusMessage { get; private set; }
+    public IReadOnlyList<SelectListItem> LocationOptions { get; } = Enum.GetValues<StorageLocation>()
+        .Select(location => new SelectListItem(DisplayLabels.Location(location), location.ToString()))
+        .ToList();
 
-    public async Task<IActionResult> OnGetAsync(string filter = "all")
+    [BindProperty]
+    public StockActionInput Input { get; set; } = new();
+
+    public async Task<IActionResult> OnGetAsync(string filter = "all", string? saved = null)
     {
         var context = await _currentUser.GetAsync();
         if (context?.Baby is null)
@@ -42,7 +51,82 @@ public sealed class StockModel : PageModel
             return RedirectToPage("/Account/Login");
         }
 
-        Containers = await _stockService.GetAvailableContainersAsync(context.User.Id, context.Baby.Id);
+        ActionStatusMessage = SavedMessage(saved);
+        await LoadAsync(context, filter);
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostMoveAsync()
+    {
+        return await HandleStockActionAsync(async context =>
+        {
+            await _stockService.MoveContainerAsync(new MoveStockContainerCommand(context.User.Id, context.Baby!.Id, Input.ContainerId, Input.Location, Input.Comment));
+            return "move";
+        });
+    }
+
+    public async Task<IActionResult> OnPostAdjustAsync()
+    {
+        return await HandleStockActionAsync(async context =>
+        {
+            await _stockService.AdjustContainerAsync(new AdjustStockContainerCommand(context.User.Id, context.Baby!.Id, Input.ContainerId, Input.RemainingQuantityMl, Input.Comment));
+            return "adjust";
+        });
+    }
+
+    public async Task<IActionResult> OnPostDiscardAsync()
+    {
+        return await HandleStockActionAsync(async context =>
+        {
+            await _stockService.MarkContainerAsync(new MarkStockContainerCommand(context.User.Id, context.Baby!.Id, Input.ContainerId, MilkStatus.Discarded, Input.Comment));
+            return "discard";
+        });
+    }
+
+    public async Task<IActionResult> OnPostExpireAsync()
+    {
+        return await HandleStockActionAsync(async context =>
+        {
+            await _stockService.MarkContainerAsync(new MarkStockContainerCommand(context.User.Id, context.Baby!.Id, Input.ContainerId, MilkStatus.Expired, Input.Comment));
+            return "expire";
+        });
+    }
+
+    private async Task<IActionResult> HandleStockActionAsync(Func<CurrentContext, Task<string>> action)
+    {
+        var context = await _currentUser.GetAsync();
+        if (context?.Baby is null)
+        {
+            return RedirectToPage("/Account/Login");
+        }
+
+        if (Input.ContainerId == Guid.Empty)
+        {
+            ModelState.AddModelError("", "Selectionne un contenant.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            await LoadAsync(context, Input.Filter);
+            return Page();
+        }
+
+        try
+        {
+            var saved = await action(context);
+            return RedirectToPage("/Stock", new { filter = Input.Filter, saved });
+        }
+        catch (InvalidOperationException ex)
+        {
+            ModelState.AddModelError("", ex.Message);
+            await LoadAsync(context, Input.Filter);
+            return Page();
+        }
+    }
+
+    private async Task LoadAsync(CurrentContext context, string filter)
+    {
+        Containers = await _stockService.GetAvailableContainersAsync(context.User.Id, context.Baby!.Id);
         Summary = await _stockService.GetSummaryAsync(context.User.Id, context.Baby.Id);
         ActiveFilter = NormalizeFilter(filter);
         Filters = BuildFilters(Containers);
@@ -50,12 +134,23 @@ public sealed class StockModel : PageModel
             .Where(container => MatchesFilter(container, ActiveFilter))
             .Select((container, index) => BuildRow(container, index + 1))
             .ToList();
-        return Page();
     }
 
     private static string NormalizeFilter(string filter)
     {
         return filter is "urgent" or "soon" or "fridge" or "freezer" ? filter : "all";
+    }
+
+    private static string? SavedMessage(string? saved)
+    {
+        return saved switch
+        {
+            "move" => "Contenant deplace.",
+            "adjust" => "Quantite ajustee.",
+            "discard" => "Contenant marque comme jete.",
+            "expire" => "Contenant marque comme expire.",
+            _ => null
+        };
     }
 
     private static IReadOnlyList<StockFilter> BuildFilters(IReadOnlyList<MilkContainer> containers)
@@ -133,5 +228,14 @@ public sealed class StockModel : PageModel
         }
 
         return $"Tire il y a {Math.Max(1, (int)Math.Floor(age.TotalDays))} j";
+    }
+
+    public sealed class StockActionInput
+    {
+        [Required] public Guid ContainerId { get; set; }
+        public StorageLocation Location { get; set; } = StorageLocation.Refrigerator;
+        [Range(0, 2000)] public int RemainingQuantityMl { get; set; }
+        public string Filter { get; set; } = "all";
+        public string Comment { get; set; } = "";
     }
 }
