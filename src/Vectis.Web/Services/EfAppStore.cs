@@ -70,6 +70,8 @@ public sealed class EfAppStore : IAppStore
             Families = await db.Families.AsNoTracking().Select(item => new Family(item.Id, item.Name, item.CreatorUserId, item.CreatedAt)).ToListAsync(),
             Members = await db.FamilyMembers.AsNoTracking().Select(item => new FamilyMember(item.UserId, item.FamilyId, item.Role, item.Status)).ToListAsync(),
             Invitations = await db.FamilyInvitations.AsNoTracking().Select(item => new FamilyInvitation(item.Id, item.FamilyId, item.Email, item.Role, item.Status, item.InvitedByUserId, item.CreatedAt, item.AcceptedAt)).ToListAsync(),
+            NotificationPreferences = await db.NotificationPreferences.AsNoTracking().Select(item => new NotificationPreferences(item.FamilyId, item.StockLowEnabled, item.ExpiringSoonEnabled, item.PreparedBottleAgingEnabled, item.StockLowBottleThreshold, item.ExpiringSoonHours, item.PreparedBottleAgeMinutes)).ToListAsync(),
+            NotificationDeliveries = await db.NotificationDeliveries.AsNoTracking().Select(item => new NotificationDelivery(item.Id, item.FamilyId, item.Kind, item.RecipientEmail, item.Subject, item.Status, item.Message, item.CreatedAt, item.SentAt)).ToListAsync(),
             Babies = await db.Babies.AsNoTracking().Select(item => new Baby(item.Id, item.FamilyId, item.FirstName, item.BirthDate, item.CurrentWeightKg, item.UsualBottleMl, item.Notes, item.IsActive)).ToListAsync(),
             PumpingSessions = await db.PumpingSessions.AsNoTracking().Select(item => new PumpingSession(item.Id, item.BabyId, item.PumpedAt, item.TotalQuantityMl, item.DurationMinutes, item.Side, item.CreatedByUserId, item.Notes, item.CreatedAt)).ToListAsync(),
             Containers = await db.MilkContainers.AsNoTracking().Select(item => new MilkContainer(item.Id, item.PumpingSessionId, item.BabyId, item.Type, item.InitialQuantityMl, item.RemainingQuantityMl, item.Location, item.Status, item.PumpedAt, item.CreatedAt, item.EstimatedExpiresAt, item.Notes)).ToListAsync(),
@@ -119,6 +121,8 @@ public sealed class EfAppStore : IAppStore
         db.MilkContainers.RemoveRange(db.MilkContainers);
         db.PumpingSessions.RemoveRange(db.PumpingSessions);
         db.Babies.RemoveRange(db.Babies);
+        db.NotificationDeliveries.RemoveRange(db.NotificationDeliveries);
+        db.NotificationPreferences.RemoveRange(db.NotificationPreferences);
         db.FamilyInvitations.RemoveRange(db.FamilyInvitations);
         db.FamilyMembers.RemoveRange(db.FamilyMembers);
         db.Families.RemoveRange(db.Families);
@@ -131,6 +135,8 @@ public sealed class EfAppStore : IAppStore
         db.Families.AddRange(state.Families.Select(item => new FamilyEntity { Id = item.Id, Name = item.Name, CreatorUserId = item.CreatorUserId, CreatedAt = item.CreatedAt }));
         db.FamilyMembers.AddRange(state.Members.Select(item => new FamilyMemberEntity { UserId = item.UserId, FamilyId = item.FamilyId, Role = item.Role, Status = item.Status }));
         db.FamilyInvitations.AddRange(state.Invitations.Select(item => new FamilyInvitationEntity { Id = item.Id, FamilyId = item.FamilyId, Email = item.Email, Role = item.Role, Status = item.Status, InvitedByUserId = item.InvitedByUserId, CreatedAt = item.CreatedAt, AcceptedAt = item.AcceptedAt }));
+        db.NotificationPreferences.AddRange(state.NotificationPreferences.Select(item => new NotificationPreferencesEntity { FamilyId = item.FamilyId, StockLowEnabled = item.StockLowEnabled, ExpiringSoonEnabled = item.ExpiringSoonEnabled, PreparedBottleAgingEnabled = item.PreparedBottleAgingEnabled, StockLowBottleThreshold = item.StockLowBottleThreshold, ExpiringSoonHours = item.ExpiringSoonHours, PreparedBottleAgeMinutes = item.PreparedBottleAgeMinutes }));
+        db.NotificationDeliveries.AddRange(state.NotificationDeliveries.Select(item => new NotificationDeliveryEntity { Id = item.Id, FamilyId = item.FamilyId, Kind = item.Kind, RecipientEmail = item.RecipientEmail, Subject = item.Subject, Status = item.Status, Message = item.Message, CreatedAt = item.CreatedAt, SentAt = item.SentAt }));
         db.Babies.AddRange(state.Babies.Select(item => new BabyEntity { Id = item.Id, FamilyId = item.FamilyId, FirstName = item.FirstName, BirthDate = item.BirthDate, CurrentWeightKg = item.CurrentWeightKg, UsualBottleMl = item.UsualBottleMl, Notes = item.Notes, IsActive = item.IsActive }));
         db.PumpingSessions.AddRange(state.PumpingSessions.Select(item => new PumpingSessionEntity { Id = item.Id, BabyId = item.BabyId, PumpedAt = item.PumpedAt, TotalQuantityMl = item.TotalQuantityMl, DurationMinutes = item.DurationMinutes, Side = item.Side, CreatedByUserId = item.CreatedByUserId, Notes = item.Notes, CreatedAt = item.CreatedAt }));
         db.MilkContainers.AddRange(state.Containers.Select(item => new MilkContainerEntity { Id = item.Id, PumpingSessionId = item.PumpingSessionId, BabyId = item.BabyId, Type = item.Type, InitialQuantityMl = item.InitialQuantityMl, RemainingQuantityMl = item.RemainingQuantityMl, Location = item.Location, Status = item.Status, PumpedAt = item.PumpedAt, CreatedAt = item.CreatedAt, EstimatedExpiresAt = item.EstimatedExpiresAt, Notes = item.Notes }));

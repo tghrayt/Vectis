@@ -28,6 +28,7 @@ builder.Services.AddScoped<SettingsService>();
 builder.Services.AddScoped<FamilyService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<InvitationEmailService>();
+builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<CurrentUser>();
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

@@ -11,11 +11,13 @@ namespace Vectis.Web.Pages;
 public sealed class SettingsModel : PageModel
 {
     private readonly SettingsService _settingsService;
+    private readonly NotificationService _notificationService;
     private readonly CurrentUser _currentUser;
 
-    public SettingsModel(SettingsService settingsService, CurrentUser currentUser)
+    public SettingsModel(SettingsService settingsService, NotificationService notificationService, CurrentUser currentUser)
     {
         _settingsService = settingsService;
+        _notificationService = notificationService;
         _currentUser = currentUser;
     }
 
@@ -24,6 +26,9 @@ public sealed class SettingsModel : PageModel
 
     [BindProperty]
     public FamilyInput Family { get; set; } = new();
+
+    [BindProperty]
+    public NotificationInput Notifications { get; set; } = new();
 
     [BindProperty]
     public RulesInput Rules { get; set; } = new();
@@ -140,6 +145,49 @@ public sealed class SettingsModel : PageModel
         return RedirectToPage("/Settings", new { saved = "rules" });
     }
 
+    public async Task<IActionResult> OnPostNotificationsAsync()
+    {
+        var context = await _currentUser.GetAsync();
+        if (context?.Family is null || context.Baby is null)
+        {
+            return RedirectToPage("/Account/Login");
+        }
+
+        ValidateNotifications();
+        if (!context.IsAdmin)
+        {
+            ModelState.AddModelError("", "Seul un administrateur peut modifier les notifications.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            await LoadAsync(context);
+            return Page();
+        }
+
+        try
+        {
+            await _notificationService.SavePreferencesAsync(
+                context.User.Id,
+                context.Family.Id,
+                new NotificationPreferences(
+                    context.Family.Id,
+                    Notifications.StockLowEnabled,
+                    Notifications.ExpiringSoonEnabled,
+                    Notifications.PreparedBottleAgingEnabled,
+                    Notifications.StockLowBottleThreshold,
+                    Notifications.ExpiringSoonHours,
+                    Notifications.PreparedBottleAgeMinutes));
+            return RedirectToPage("/Settings", new { saved = "notifications" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            ModelState.AddModelError("", ex.Message);
+            await LoadAsync(context);
+            return Page();
+        }
+    }
+
     private async Task LoadAsync(CurrentContext context)
     {
         CanEdit = context.IsAdmin;
@@ -156,6 +204,16 @@ public sealed class SettingsModel : PageModel
             Name = context.Family!.Name,
             Language = context.User.Language,
             TimeZone = context.User.TimeZone
+        };
+        var overview = await _notificationService.GetOverviewAsync(context.User.Id, context.Family.Id);
+        Notifications = new NotificationInput
+        {
+            StockLowEnabled = overview.Preferences.StockLowEnabled,
+            ExpiringSoonEnabled = overview.Preferences.ExpiringSoonEnabled,
+            PreparedBottleAgingEnabled = overview.Preferences.PreparedBottleAgingEnabled,
+            StockLowBottleThreshold = overview.Preferences.StockLowBottleThreshold,
+            ExpiringSoonHours = overview.Preferences.ExpiringSoonHours,
+            PreparedBottleAgeMinutes = overview.Preferences.PreparedBottleAgeMinutes
         };
 
         var rules = await _settingsService.GetConservationRulesAsync();
@@ -212,6 +270,25 @@ public sealed class SettingsModel : PageModel
         }
     }
 
+    private void ValidateNotifications()
+    {
+        ModelState.Clear();
+        if (Notifications.StockLowBottleThreshold < 0 || Notifications.StockLowBottleThreshold > 50)
+        {
+            ModelState.AddModelError("Notifications.StockLowBottleThreshold", "Le seuil stock faible doit etre compris entre 0 et 50 biberons.");
+        }
+
+        if (Notifications.ExpiringSoonHours <= 0 || Notifications.ExpiringSoonHours > 240)
+        {
+            ModelState.AddModelError("Notifications.ExpiringSoonHours", "Le seuil d'expiration doit etre compris entre 1 et 240 heures.");
+        }
+
+        if (Notifications.PreparedBottleAgeMinutes < 15 || Notifications.PreparedBottleAgeMinutes > 1440)
+        {
+            ModelState.AddModelError("Notifications.PreparedBottleAgeMinutes", "Le delai biberon doit etre compris entre 15 et 1440 minutes.");
+        }
+    }
+
     public sealed class BabyInput
     {
         [Required] public string FirstName { get; set; } = "";
@@ -226,6 +303,16 @@ public sealed class SettingsModel : PageModel
         [Required] public string Name { get; set; } = "";
         [Required] public string Language { get; set; } = "fr";
         [Required] public string TimeZone { get; set; } = "Europe/Paris";
+    }
+
+    public sealed class NotificationInput
+    {
+        public bool StockLowEnabled { get; set; } = true;
+        public bool ExpiringSoonEnabled { get; set; } = true;
+        public bool PreparedBottleAgingEnabled { get; set; } = true;
+        [Range(0, 50)] public int StockLowBottleThreshold { get; set; } = 2;
+        [Range(1, 240)] public int ExpiringSoonHours { get; set; } = 24;
+        [Range(15, 1440)] public int PreparedBottleAgeMinutes { get; set; } = 120;
     }
 
     public sealed class RulesInput

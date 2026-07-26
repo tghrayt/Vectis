@@ -50,6 +50,13 @@ public enum FeedingReaction
     Other
 }
 
+public enum NotificationKind
+{
+    StockLow,
+    ExpiringSoon,
+    PreparedBottleAging
+}
+
 public sealed record AppUser(
     Guid Id,
     string FirstName,
@@ -71,6 +78,26 @@ public sealed record FamilyInvitation(
     Guid InvitedByUserId,
     DateTimeOffset CreatedAt,
     DateTimeOffset? AcceptedAt);
+
+public sealed record NotificationPreferences(
+    Guid FamilyId,
+    bool StockLowEnabled,
+    bool ExpiringSoonEnabled,
+    bool PreparedBottleAgingEnabled,
+    int StockLowBottleThreshold,
+    int ExpiringSoonHours,
+    int PreparedBottleAgeMinutes);
+
+public sealed record NotificationDelivery(
+    Guid Id,
+    Guid FamilyId,
+    NotificationKind Kind,
+    string RecipientEmail,
+    string Subject,
+    string Status,
+    string Message,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? SentAt);
 
 public sealed record Family(Guid Id, string Name, Guid CreatorUserId, DateTimeOffset CreatedAt);
 

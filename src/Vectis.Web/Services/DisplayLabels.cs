@@ -64,4 +64,15 @@ public static class DisplayLabels
             _ => status
         };
     }
+
+    public static string NotificationKind(NotificationKind kind)
+    {
+        return kind switch
+        {
+            Domain.NotificationKind.StockLow => "Stock faible",
+            Domain.NotificationKind.ExpiringSoon => "Lait bientot expire",
+            Domain.NotificationKind.PreparedBottleAging => "Biberon en attente",
+            _ => kind.ToString()
+        };
+    }
 }

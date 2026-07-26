@@ -42,6 +42,30 @@ public sealed class FamilyInvitationEntity
     public DateTimeOffset? AcceptedAt { get; set; }
 }
 
+public sealed class NotificationPreferencesEntity
+{
+    public Guid FamilyId { get; set; }
+    public bool StockLowEnabled { get; set; } = true;
+    public bool ExpiringSoonEnabled { get; set; } = true;
+    public bool PreparedBottleAgingEnabled { get; set; } = true;
+    public int StockLowBottleThreshold { get; set; } = 2;
+    public int ExpiringSoonHours { get; set; } = 24;
+    public int PreparedBottleAgeMinutes { get; set; } = 120;
+}
+
+public sealed class NotificationDeliveryEntity
+{
+    public Guid Id { get; set; }
+    public Guid FamilyId { get; set; }
+    public NotificationKind Kind { get; set; }
+    public string RecipientEmail { get; set; } = "";
+    public string Subject { get; set; } = "";
+    public string Status { get; set; } = "";
+    public string Message { get; set; } = "";
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset? SentAt { get; set; }
+}
+
 public sealed class BabyEntity
 {
     public Guid Id { get; set; }

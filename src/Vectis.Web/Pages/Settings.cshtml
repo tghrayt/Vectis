@@ -93,6 +93,45 @@
     </form>
 </section>
 
+<form method="post" asp-page-handler="Notifications" class="card stack" style="margin-top:16px">
+    <div class="card-head">
+        <div>
+            <h2>Notifications</h2>
+            <p>Alertes e-mail pretes pour le stock, les expirations et les biberons en attente.</p>
+        </div>
+        <a class="button" asp-page="/Notifications"><svg class="icon"><use href="#icon-alert" /></svg>Voir les alertes</a>
+    </div>
+
+    <div class="notification-settings">
+        <label class="toggle-row">
+            <input asp-for="Notifications.StockLowEnabled" type="checkbox" disabled="@(!Model.CanEdit)" />
+            <span>Stock faible</span>
+        </label>
+        <label class="toggle-row">
+            <input asp-for="Notifications.ExpiringSoonEnabled" type="checkbox" disabled="@(!Model.CanEdit)" />
+            <span>Lait bientot expire</span>
+        </label>
+        <label class="toggle-row">
+            <input asp-for="Notifications.PreparedBottleAgingEnabled" type="checkbox" disabled="@(!Model.CanEdit)" />
+            <span>Biberon prepare trop longtemps</span>
+        </label>
+    </div>
+
+    <div class="grid three">
+        <label>Seuil stock faible (biberons)
+            <input asp-for="Notifications.StockLowBottleThreshold" type="number" min="0" max="50" disabled="@(!Model.CanEdit)" />
+        </label>
+        <label>Expiration proche (heures)
+            <input asp-for="Notifications.ExpiringSoonHours" type="number" min="1" max="240" disabled="@(!Model.CanEdit)" />
+        </label>
+        <label>Biberon en attente (minutes)
+            <input asp-for="Notifications.PreparedBottleAgeMinutes" type="number" min="15" max="1440" disabled="@(!Model.CanEdit)" />
+        </label>
+    </div>
+
+    <button class="primary" type="submit" disabled="@(!Model.CanEdit)"><svg class="icon"><use href="#icon-check" /></svg>Enregistrer les notifications</button>
+</form>
+
 <form method="post" asp-page-handler="Rules" class="card stack" style="margin-top:16px">
     <div class="card-head">
         <div>

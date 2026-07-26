@@ -13,6 +13,8 @@ public sealed class VectisDbContext : DbContext
     public DbSet<FamilyEntity> Families => Set<FamilyEntity>();
     public DbSet<FamilyMemberEntity> FamilyMembers => Set<FamilyMemberEntity>();
     public DbSet<FamilyInvitationEntity> FamilyInvitations => Set<FamilyInvitationEntity>();
+    public DbSet<NotificationPreferencesEntity> NotificationPreferences => Set<NotificationPreferencesEntity>();
+    public DbSet<NotificationDeliveryEntity> NotificationDeliveries => Set<NotificationDeliveryEntity>();
     public DbSet<BabyEntity> Babies => Set<BabyEntity>();
     public DbSet<PumpingSessionEntity> PumpingSessions => Set<PumpingSessionEntity>();
     public DbSet<MilkContainerEntity> MilkContainers => Set<MilkContainerEntity>();
@@ -58,6 +60,29 @@ public sealed class VectisDbContext : DbContext
             entity.Property(item => item.Role).HasConversion<string>();
             entity.HasOne<FamilyEntity>().WithMany().HasForeignKey(item => item.FamilyId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne<UserEntity>().WithMany().HasForeignKey(item => item.InvitedByUserId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<NotificationPreferencesEntity>(entity =>
+        {
+            entity.ToTable("notification_preferences");
+            entity.HasKey(item => item.FamilyId);
+            entity.HasOne<FamilyEntity>().WithMany().HasForeignKey(item => item.FamilyId).OnDelete(DeleteBehavior.Cascade);
+            entity.ToTable(table =>
+            {
+                table.HasCheckConstraint("CK_notification_preferences_stock_threshold_positive", "\"StockLowBottleThreshold\" >= 0");
+                table.HasCheckConstraint("CK_notification_preferences_expiring_hours_positive", "\"ExpiringSoonHours\" > 0");
+                table.HasCheckConstraint("CK_notification_preferences_bottle_age_positive", "\"PreparedBottleAgeMinutes\" > 0");
+            });
+        });
+
+        modelBuilder.Entity<NotificationDeliveryEntity>(entity =>
+        {
+            entity.ToTable("notification_deliveries");
+            entity.HasKey(item => item.Id);
+            entity.HasIndex(item => new { item.FamilyId, item.Kind, item.CreatedAt });
+            entity.Property(item => item.Kind).HasConversion<string>();
+            entity.Property(item => item.RecipientEmail).HasMaxLength(320);
+            entity.HasOne<FamilyEntity>().WithMany().HasForeignKey(item => item.FamilyId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<BabyEntity>(entity =>

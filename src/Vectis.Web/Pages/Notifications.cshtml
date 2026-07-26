@@ -1,0 +1,88 @@
+@page
+@model Vectis.Web.Pages.NotificationsModel
+@{
+    ViewData["Title"] = "Notifications";
+}
+
+<section class="page-head">
+    <div>
+        <h1>Notifications</h1>
+        <p>Alertes e-mail detectees a partir du stock, des biberons et des preferences famille.</p>
+    </div>
+    <a class="button" asp-page="/Settings"><svg class="icon"><use href="#icon-settings" /></svg>Preferences</a>
+</section>
+
+<div asp-validation-summary="All" class="danger"></div>
+
+@if (Model.SendSummary is not null)
+{
+    <div class="card notice" style="margin-bottom:16px">
+        <p>@Model.SendSummary.Sent envoye(s), @Model.SendSummary.Skipped ignore(s), @Model.SendSummary.Failed echec(s).</p>
+    </div>
+}
+
+@if (Model.Overview is not null)
+{
+    <section class="card operations-card">
+        <div class="card-head">
+            <div>
+                <h2>Alertes actives</h2>
+                <p>Seules les alertes activees dans les preferences peuvent etre envoyees.</p>
+            </div>
+            <form method="post" asp-page-handler="Send">
+                <button class="primary" type="submit" disabled="@(!Model.CanSend || Model.Overview.Alerts.Count == 0)"><svg class="icon"><use href="#icon-alert" /></svg>Envoyer maintenant</button>
+            </form>
+        </div>
+
+        @if (Model.Overview.Alerts.Count == 0)
+        {
+            <div class="timeline-empty">Aucune notification a envoyer pour le moment.</div>
+        }
+        else
+        {
+            <div class="alert-grid">
+                @foreach (var alert in Model.Overview.Alerts)
+                {
+                    <article class="action-alert @alert.Severity @(alert.Enabled ? "" : "disabled-alert")">
+                        <svg class="icon alert-icon"><use href="#icon-alert" /></svg>
+                        <div>
+                            <strong>@alert.Title</strong>
+                            <p>@alert.Message</p>
+                        </div>
+                        <span class="pill">@(alert.Enabled ? "Activee" : "Desactivee")</span>
+                    </article>
+                }
+            </div>
+        }
+    </section>
+
+    <section class="card" style="margin-top:16px">
+        <div class="card-head">
+            <div>
+                <h2>Derniers envois</h2>
+                <p>Historique technique des notifications envoyees ou ignorees.</p>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table class="compact-table">
+                <thead><tr><th>Date</th><th>Type</th><th>Destinataire</th><th>Statut</th><th>Message</th></tr></thead>
+                <tbody>
+                @foreach (var delivery in Model.Overview.RecentDeliveries)
+                {
+                    <tr>
+                        <td>@delivery.CreatedAt.LocalDateTime.ToString("g")</td>
+                        <td>@DisplayLabels.NotificationKind(delivery.Kind)</td>
+                        <td>@(string.IsNullOrWhiteSpace(delivery.RecipientEmail) ? "-" : delivery.RecipientEmail)</td>
+                        <td><span class="pill status-@delivery.Status">@Model.StatusLabel(delivery.Status)</span></td>
+                        <td>@delivery.Message</td>
+                    </tr>
+                }
+                @if (Model.Overview.RecentDeliveries.Count == 0)
+                {
+                    <tr><td colspan="5" class="muted">Aucun envoi enregistre.</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}

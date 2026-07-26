@@ -146,6 +146,7 @@ p { color: var(--muted); line-height: 1.6; }
 
 .grid.stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .dashboard-main { grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.85fr); }
 .dashboard-grid { align-items: start; }
 
@@ -194,6 +195,10 @@ p { color: var(--muted); line-height: 1.6; }
 .action-alert.warning .alert-icon { color: var(--accent); }
 .action-alert.danger .alert-icon { color: var(--danger); }
 .action-alert.info .alert-icon { color: #3b82f6; }
+
+.disabled-alert {
+  opacity: 0.62;
+}
 
 .pending-bottle-list {
   display: grid;
@@ -540,6 +545,27 @@ form.stack, .stack {
   gap: 10px;
 }
 
+.notification-settings {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.toggle-row {
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: flex;
+  gap: 10px;
+  min-height: 48px;
+  padding: 10px 12px;
+}
+
+.toggle-row input {
+  min-height: auto;
+  width: auto;
+}
+
 label {
   display: grid;
   gap: 6px;
@@ -611,13 +637,28 @@ td {
   color: var(--danger);
 }
 
+.status-sent {
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
+}
+
+.status-failed {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
+}
+
+.status-ignored {
+  background: color-mix(in srgb, var(--muted) 16%, transparent);
+  color: var(--muted);
+}
+
 .danger { color: var(--danger); }
 .muted { color: var(--muted); }
 .notice { border-left: 4px solid var(--accent); }
 
 @media (max-width: 860px) {
   .topbar { grid-template-columns: 1fr; }
-  .grid.stats, .grid.two, .dashboard-band, .dashboard-main, .priority-strip, .alert-grid, .action-alert, .pending-bottle, .settings-layout { grid-template-columns: 1fr; }
+  .grid.stats, .grid.two, .grid.three, .dashboard-band, .dashboard-main, .priority-strip, .alert-grid, .action-alert, .pending-bottle, .settings-layout, .notification-settings { grid-template-columns: 1fr; }
   .page-head { align-items: start; flex-direction: column; }
   .table-actions { flex-wrap: wrap; }
   .card-head { flex-direction: column; }
