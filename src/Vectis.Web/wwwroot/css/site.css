@@ -844,6 +844,94 @@ p { color: var(--muted); line-height: 1.6; }
   margin: 0;
 }
 
+.settings-command {
+  align-items: stretch;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  margin-bottom: 16px;
+}
+
+.settings-hero {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--primary) 14%, var(--panel)), var(--panel) 60%),
+    var(--panel);
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--line));
+  border-left: 5px solid var(--primary);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 10px;
+  padding: 20px;
+}
+
+.settings-hero h2 {
+  font-size: clamp(1.65rem, 3vw, 2.35rem);
+}
+
+.settings-hero p {
+  margin: 0;
+}
+
+.settings-metrics {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 6px 16px;
+}
+
+.settings-metrics div {
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 4px;
+  min-height: 92px;
+  padding: 14px 0;
+}
+
+.settings-metrics div:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.settings-metrics span,
+.settings-metrics small {
+  color: var(--muted);
+}
+
+.settings-metrics strong {
+  font-size: 1.15rem;
+}
+
+.rules-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.rule-row {
+  align-items: center;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--primary);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 0.3fr);
+  min-height: 86px;
+  padding: 12px;
+}
+
+.rule-row span {
+  display: grid;
+  gap: 4px;
+}
+
+.rule-row small {
+  color: var(--muted);
+  font-weight: 500;
+}
+
 .settings-layout {
   align-items: start;
   display: grid;
@@ -1372,7 +1460,7 @@ td {
 
 @media (max-width: 860px) {
   .topbar { grid-template-columns: 1fr; }
-  .grid.stats, .grid.two, .grid.three, .dashboard-band, .dashboard-main, .priority-strip, .alert-grid, .action-alert, .pending-bottle, .settings-layout, .notification-settings, .command-center, .decision-panel, .stock-overview, .stock-item-main, .stock-meta, .stock-actions, .bottle-planner, .recommendation-strip, .bottle-source-grid, .prep-status, .feed-workbench, .feed-mode-grid, .feed-result-grid, .history-summary, .history-layout, .history-event, .notification-command, .notification-metrics { grid-template-columns: 1fr; }
+  .grid.stats, .grid.two, .grid.three, .dashboard-band, .dashboard-main, .priority-strip, .alert-grid, .action-alert, .pending-bottle, .settings-layout, .notification-settings, .command-center, .decision-panel, .stock-overview, .stock-item-main, .stock-meta, .stock-actions, .bottle-planner, .recommendation-strip, .bottle-source-grid, .prep-status, .feed-workbench, .feed-mode-grid, .feed-result-grid, .history-summary, .history-layout, .history-event, .notification-command, .notification-metrics, .settings-command, .settings-metrics, .rules-grid, .rule-row { grid-template-columns: 1fr; }
   .page-head { align-items: start; flex-direction: column; }
   .table-actions { flex-wrap: wrap; }
   .card-head { flex-direction: column; }
@@ -1384,4 +1472,6 @@ td {
   .stock-actions .button { width: 100%; }
   .notification-metrics div { border-bottom: 1px solid var(--line); }
   .notification-metrics div:last-child { border-bottom: 0; }
+  .settings-metrics div { border-bottom: 1px solid var(--line); }
+  .settings-metrics div:last-child { border-bottom: 0; }
 }

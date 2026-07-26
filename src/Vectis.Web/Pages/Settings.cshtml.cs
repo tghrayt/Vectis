@@ -35,6 +35,12 @@ public sealed class SettingsModel : PageModel
 
     public string? SavedSection { get; private set; }
     public bool CanEdit { get; private set; }
+    public string AccessLabel => CanEdit ? "Administrateur" : "Lecture seule";
+    public string NotificationStatusLabel => Notifications.AutomaticEmailEnabled ? "Automatique active" : "Automatique desactive";
+    public int ActiveNotificationRules =>
+        (Notifications.StockLowEnabled ? 1 : 0)
+        + (Notifications.ExpiringSoonEnabled ? 1 : 0)
+        + (Notifications.PreparedBottleAgingEnabled ? 1 : 0);
 
     public async Task<IActionResult> OnGetAsync(string? saved)
     {

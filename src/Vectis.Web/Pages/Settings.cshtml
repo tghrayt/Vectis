@@ -27,6 +27,20 @@
 
 <div asp-validation-summary="All" class="danger"></div>
 
+<section class="settings-command">
+    <article class="settings-hero">
+        <span class="eyebrow">Configuration famille</span>
+        <h2>@Model.Family.Name</h2>
+        <p>@Model.AccessLabel. Ces reglages alimentent le dashboard, le stock, les biberons et les alertes.</p>
+    </article>
+    <aside class="settings-metrics">
+        <div><span>Bebe</span><strong>@Model.Baby.FirstName</strong><small>@Model.Baby.UsualBottleMl ml par biberon</small></div>
+        <div><span>Notifications</span><strong>@Model.NotificationStatusLabel</strong><small>@Model.ActiveNotificationRules regle(s) active(s)</small></div>
+        <div><span>Conservation</span><strong>@Model.Rules.Items.Count lieux</strong><small>Regles configurables</small></div>
+        <div><span>Fuseau</span><strong>@Model.Family.TimeZone</strong><small>@Model.Family.Language</small></div>
+    </aside>
+</section>
+
 <section class="settings-layout">
     <form method="post" asp-page-handler="Baby" class="card stack">
         <div class="card-head">
@@ -145,22 +159,18 @@
         <span class="pill"><svg class="icon"><use href="#icon-settings" /></svg>@Model.Rules.Items.Count lieux</span>
     </div>
 
-    <div class="table-wrap">
-        <table>
-            <thead><tr><th>Lieu</th><th>Duree maximale (heures)</th></tr></thead>
-            <tbody>
-            @for (var i = 0; i < Model.Rules.Items.Count; i++)
-            {
-                <tr>
-                    <td>
-                        @DisplayLabels.Location(Model.Rules.Items[i].Location)
-                        <input type="hidden" asp-for="Rules.Items[i].Location" />
-                    </td>
-                    <td><input asp-for="Rules.Items[i].DurationHours" type="number" min="1" disabled="@(!Model.CanEdit)" /></td>
-                </tr>
-            }
-            </tbody>
-        </table>
+    <div class="rules-grid">
+        @for (var i = 0; i < Model.Rules.Items.Count; i++)
+        {
+            <label class="rule-row">
+                <span>
+                    <strong>@DisplayLabels.Location(Model.Rules.Items[i].Location)</strong>
+                    <small>Duree maximale avant expiration estimee</small>
+                </span>
+                <input type="hidden" asp-for="Rules.Items[i].Location" />
+                <input asp-for="Rules.Items[i].DurationHours" type="number" min="1" disabled="@(!Model.CanEdit)" />
+            </label>
+        }
     </div>
     <button class="primary" type="submit" disabled="@(!Model.CanEdit)"><svg class="icon"><use href="#icon-check" /></svg>Enregistrer les regles</button>
 </form>
