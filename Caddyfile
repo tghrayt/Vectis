@@ -1,3 +1,0 @@
-{$APP_HOST} {
-	reverse_proxy vectis-web:8080
-}

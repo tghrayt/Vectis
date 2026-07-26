@@ -53,7 +53,8 @@ jobs:
       - name: Copy deployment files
         run: |
           ssh -p "${{ secrets.VM_PORT }}" "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}" "sudo mkdir -p /opt/vectis && sudo chown ${{ secrets.VM_USER }}:${{ secrets.VM_USER }} /opt/vectis"
-          scp -P "${{ secrets.VM_PORT }}" docker-compose.prod.yml Caddyfile vectis-app.tar.gz "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:/opt/vectis/"
+          scp -P "${{ secrets.VM_PORT }}" vectis-app.tar.gz "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:/opt/vectis/"
+          scp -P "${{ secrets.VM_PORT }}" -r k8s "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:/opt/vectis/"
 
       - name: Deploy on VM
         run: |
@@ -61,30 +62,50 @@ jobs:
           set -euo pipefail
           cd /opt/vectis
 
-          cat > .env << 'ENVEOF'
-          IMAGE_TAG=${{ github.sha }}
-          APP_HOST=${{ vars.APP_HOST || '51-210-40-78.sslip.io' }}
-          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-          SMTP_ENABLED=${{ vars.SMTP_ENABLED || 'false' }}
-          SMTP_HOST=${{ secrets.SMTP_HOST }}
-          SMTP_PORT=${{ vars.SMTP_PORT || '587' }}
-          SMTP_USERNAME=${{ secrets.SMTP_USERNAME }}
-          SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
-          SMTP_FROM_EMAIL=${{ secrets.SMTP_FROM_EMAIL }}
-          SMTP_FROM_NAME=${{ vars.SMTP_FROM_NAME || 'Vectis' }}
-          SMTP_ENABLE_SSL=${{ vars.SMTP_ENABLE_SSL || 'true' }}
-          ENVEOF
+          docker rm -f vectis-proxy vectis-web vectis-db >/dev/null 2>&1 || true
 
-          docker load < vectis-app.tar.gz
-          docker compose -f docker-compose.prod.yml --env-file .env up -d --remove-orphans
-          docker image prune -f
-          rm -f vectis-app.tar.gz
+          gunzip -f vectis-app.tar.gz
+          sudo k3s ctr -n k8s.io images import vectis-app.tar
+          rm -f vectis-app.tar
+
+          if ! sudo k3s kubectl get namespace cert-manager >/dev/null 2>&1; then
+            sudo k3s kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.3/cert-manager.yaml
+            sudo k3s kubectl -n cert-manager rollout status deployment/cert-manager --timeout=180s
+            sudo k3s kubectl -n cert-manager rollout status deployment/cert-manager-webhook --timeout=180s
+            sudo k3s kubectl -n cert-manager rollout status deployment/cert-manager-cainjector --timeout=180s
+          fi
+
+          sudo k3s kubectl apply -f k8s/cert-manager/cluster-issuer.yaml
+
+          sudo k3s kubectl create namespace vectis --dry-run=client -o yaml | sudo k3s kubectl apply -f -
+          sudo k3s kubectl -n vectis create secret generic vectis-secrets \
+            --from-literal=POSTGRES_PASSWORD='${{ secrets.POSTGRES_PASSWORD }}' \
+            --from-literal=CONNECTION_STRING='Host=vectis-db;Port=5432;Database=vectis;Username=vectis;Password=${{ secrets.POSTGRES_PASSWORD }}' \
+            --from-literal=SMTP_ENABLED='${{ vars.SMTP_ENABLED || 'false' }}' \
+            --from-literal=SMTP_HOST='${{ secrets.SMTP_HOST }}' \
+            --from-literal=SMTP_PORT='${{ vars.SMTP_PORT || '587' }}' \
+            --from-literal=SMTP_USERNAME='${{ secrets.SMTP_USERNAME }}' \
+            --from-literal=SMTP_PASSWORD='${{ secrets.SMTP_PASSWORD }}' \
+            --from-literal=SMTP_FROM_EMAIL='${{ secrets.SMTP_FROM_EMAIL }}' \
+            --from-literal=SMTP_FROM_NAME='${{ vars.SMTP_FROM_NAME || 'Vectis' }}' \
+            --from-literal=SMTP_ENABLE_SSL='${{ vars.SMTP_ENABLE_SSL || 'true' }}' \
+            --dry-run=client -o yaml | sudo k3s kubectl apply -f -
+
+          sed \
+            -e 's#__IMAGE_TAG__#${{ github.sha }}#g' \
+            -e 's#__APP_HOST__#${{ vars.APP_HOST || 'vectis.51-210-40-78.sslip.io' }}#g' \
+            k8s/vectis.yaml > k8s/vectis.rendered.yaml
+          sudo k3s kubectl apply -f k8s/vectis.rendered.yaml
+
+          sudo k3s kubectl -n vectis rollout restart deployment/vectis-web
+          sudo k3s kubectl -n vectis rollout status deployment/vectis-web --timeout=240s
+          sudo k3s kubectl -n vectis get ingress,svc,pods
           EOF
 
       - name: Smoke test
         run: |
           for attempt in {1..18}; do
-            if curl --fail --show-error --max-time 20 "https://${{ vars.APP_HOST || '51-210-40-78.sslip.io' }}/health"; then
+            if curl --fail --show-error --max-time 20 "https://${{ vars.APP_HOST || 'vectis.51-210-40-78.sslip.io' }}/health"; then
               exit 0
             fi
             echo "Waiting for HTTPS health check... attempt ${attempt}/18"

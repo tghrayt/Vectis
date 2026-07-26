@@ -1,0 +1,182 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vectis
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vectis-db
+  namespace: vectis
+spec:
+  selector:
+    app: vectis-db
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: vectis-db
+  namespace: vectis
+spec:
+  serviceName: vectis-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vectis-db
+  template:
+    metadata:
+      labels:
+        app: vectis-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: vectis
+            - name: POSTGRES_USER
+              value: vectis
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: vectis-secrets
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vectis-web
+  namespace: vectis
+spec:
+  selector:
+    app: vectis-web
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vectis-web
+  namespace: vectis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vectis-web
+  template:
+    metadata:
+      labels:
+        app: vectis-web
+    spec:
+      containers:
+        - name: vectis-web
+          image: docker.io/library/vectis-app:__IMAGE_TAG__
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Production
+            - name: ASPNETCORE_URLS
+              value: http://+:8080
+            - name: ConnectionStrings__Vectis
+              valueFrom:
+                secretKeyRef:
+                  name: vectis-secrets
+                  key: CONNECTION_STRING
+            - name: Smtp__Enabled
+              valueFrom:
+                secretKeyRef:
+                  name: vectis-secrets
+                  key: SMTP_ENABLED
+            - name: Smtp__Host
+              valueFrom:
+                secretKeyRef:
+                  name: vectis-secrets
+                  key: SMTP_HOST
+            - name: Smtp__Port
+              valueFrom:
+                secretKeyRef:
+                  name: vectis-secrets
+                  key: SMTP_PORT
+            - name: Smtp__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: vectis-secrets
+                  key: SMTP_USERNAME
+            - name: Smtp__Password
+              valueFrom:
+                secretKeyRef:
+                  name: vectis-secrets
+                  key: SMTP_PASSWORD
+            - name: Smtp__FromEmail
+              valueFrom:
+                secretKeyRef:
+                  name: vectis-secrets
+                  key: SMTP_FROM_EMAIL
+            - name: Smtp__FromName
+              valueFrom:
+                secretKeyRef:
+                  name: vectis-secrets
+                  key: SMTP_FROM_NAME
+            - name: Smtp__EnableSsl
+              valueFrom:
+                secretKeyRef:
+                  name: vectis-secrets
+                  key: SMTP_ENABLE_SSL
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 20
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vectis-web
+  namespace: vectis
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-http
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - __APP_HOST__
+      secretName: vectis-web-tls
+  rules:
+    - host: __APP_HOST__
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vectis-web
+                port:
+                  number: 80
