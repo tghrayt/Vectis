@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Vectis</title>
     <script type="importmap"></script>
+    <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="manifest" href="~/manifest.webmanifest" />
     <meta name="theme-color" content="#0f766e" />
@@ -29,18 +30,26 @@
     </svg>
     <header>
         <nav class="topbar">
-            <a class="brand" asp-page="/Index"><span class="brand-mark">V</span>Vectis</a>
-            <div class="navlinks">
-                <a asp-page="/Index"><svg class="icon"><use href="#icon-dashboard" /></svg>Tableau</a>
-                <a asp-page="/Pumping"><svg class="icon"><use href="#icon-pumping" /></svg>Tirage</a>
-                <a asp-page="/Stock"><svg class="icon"><use href="#icon-stock" /></svg>Stock</a>
-                <a asp-page="/Bottle"><svg class="icon"><use href="#icon-bottle" /></svg>Preparer</a>
-                <a asp-page="/Feed"><svg class="icon"><use href="#icon-feed" /></svg>Donner</a>
-                <a asp-page="/History"><svg class="icon"><use href="#icon-history" /></svg>Historique</a>
-                <a asp-page="/Notifications"><svg class="icon"><use href="#icon-alert" /></svg>Alertes</a>
-                <a asp-page="/Users"><svg class="icon"><use href="#icon-users" /></svg>Utilisateurs</a>
-                <a asp-page="/Settings"><svg class="icon"><use href="#icon-settings" /></svg>Profil</a>
-            </div>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a class="brand" asp-page="/Index"><span class="brand-mark">V</span>Vectis</a>
+                <div class="navlinks">
+                    <a asp-page="/Index"><svg class="icon"><use href="#icon-dashboard" /></svg>Tableau</a>
+                    <a asp-page="/Pumping"><svg class="icon"><use href="#icon-pumping" /></svg>Tirage</a>
+                    <a asp-page="/Stock"><svg class="icon"><use href="#icon-stock" /></svg>Stock</a>
+                    <a asp-page="/Bottle"><svg class="icon"><use href="#icon-bottle" /></svg>Preparer</a>
+                    <a asp-page="/Feed"><svg class="icon"><use href="#icon-feed" /></svg>Donner</a>
+                    <a asp-page="/History"><svg class="icon"><use href="#icon-history" /></svg>Historique</a>
+                    <a asp-page="/Notifications"><svg class="icon"><use href="#icon-alert" /></svg>Alertes</a>
+                    <a asp-page="/Users"><svg class="icon"><use href="#icon-users" /></svg>Utilisateurs</a>
+                    <a asp-page="/Settings"><svg class="icon"><use href="#icon-settings" /></svg>Profil</a>
+                </div>
+            }
+            else
+            {
+                <a class="brand" asp-page="/Account/Login"><span class="brand-mark">V</span>Vectis</a>
+                <div class="navlinks"></div>
+            }
             <div class="session">
                 @if (User.Identity?.IsAuthenticated == true)
                 {

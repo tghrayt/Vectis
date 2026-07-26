@@ -5,5 +5,13 @@
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#0f766e",
-  "description": "Gestion familiale du lait maternel tire."
+  "description": "Gestion familiale du lait maternel tire.",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
