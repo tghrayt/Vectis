@@ -45,6 +45,7 @@ public sealed class FamilyInvitationEntity
 public sealed class NotificationPreferencesEntity
 {
     public Guid FamilyId { get; set; }
+    public bool AutomaticEmailEnabled { get; set; }
     public bool StockLowEnabled { get; set; } = true;
     public bool ExpiringSoonEnabled { get; set; } = true;
     public bool PreparedBottleAgingEnabled { get; set; } = true;

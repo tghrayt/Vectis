@@ -566,6 +566,11 @@ form.stack, .stack {
   width: auto;
 }
 
+.highlight-toggle {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--line));
+  background: color-mix(in srgb, var(--primary) 7%, transparent);
+}
+
 label {
   display: grid;
   gap: 6px;

@@ -81,6 +81,7 @@ public sealed record FamilyInvitation(
 
 public sealed record NotificationPreferences(
     Guid FamilyId,
+    bool AutomaticEmailEnabled,
     bool StockLowEnabled,
     bool ExpiringSoonEnabled,
     bool PreparedBottleAgingEnabled,

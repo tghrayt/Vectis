@@ -76,13 +76,42 @@ public sealed class NotificationService
 
     public async Task<NotificationSendSummary> SendNowAsync(Guid userId, Guid familyId)
     {
+        var state = await _store.LoadAsync();
+        EnsureFamilyAdmin(state, userId, familyId);
+        return await SendForFamilyAsync(familyId, requireAutomaticEnabled: false);
+    }
+
+    public async Task<NotificationSendSummary> SendAutomaticAsync()
+    {
+        var state = await _store.LoadAsync();
+        var familyIds = state.Families
+            .Select(family => family.Id)
+            .Where(familyId => EnsurePreferences(state, familyId).AutomaticEmailEnabled)
+            .ToList();
+
+        var total = new NotificationSendSummary(0, 0, 0);
+        foreach (var familyId in familyIds)
+        {
+            var summary = await SendForFamilyAsync(familyId, requireAutomaticEnabled: true);
+            total = new NotificationSendSummary(total.Sent + summary.Sent, total.Skipped + summary.Skipped, total.Failed + summary.Failed);
+        }
+
+        return total;
+    }
+
+    private async Task<NotificationSendSummary> SendForFamilyAsync(Guid familyId, bool requireAutomaticEnabled)
+    {
         var pendingSends = new List<(string Email, NotificationAlert Alert)>();
         var skippedDeliveries = new List<NotificationDelivery>();
         var now = _clock.GetUtcNow();
 
         var state = await _store.LoadAsync();
-        EnsureFamilyAdmin(state, userId, familyId);
         var preferences = EnsurePreferences(state, familyId);
+        if (requireAutomaticEnabled && !preferences.AutomaticEmailEnabled)
+        {
+            return new NotificationSendSummary(0, 0, 0);
+        }
+
         var alerts = BuildAlerts(state, familyId, preferences).Where(alert => alert.Enabled).ToList();
         var recipients = state.Members
             .Where(member => member.FamilyId == familyId && member.Status == "accepted")
@@ -124,7 +153,6 @@ public sealed class NotificationService
 
         await _store.MutateAsync(nextState =>
         {
-            EnsureFamilyAdmin(nextState, userId, familyId);
             nextState.NotificationDeliveries.AddRange(skippedDeliveries);
             nextState.NotificationDeliveries.AddRange(sentDeliveries);
         });
@@ -204,7 +232,7 @@ public sealed class NotificationService
             return preferences;
         }
 
-        return new NotificationPreferences(familyId, true, true, true, 2, 24, 120);
+        return new NotificationPreferences(familyId, false, true, true, true, 2, 24, 120);
     }
 
     private static NotificationDelivery NewDelivery(Guid familyId, NotificationAlert alert, string email, string status, string message, DateTimeOffset createdAt, DateTimeOffset? sentAt)

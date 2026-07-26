@@ -172,6 +172,7 @@ public sealed class SettingsModel : PageModel
                 context.Family.Id,
                 new NotificationPreferences(
                     context.Family.Id,
+                    Notifications.AutomaticEmailEnabled,
                     Notifications.StockLowEnabled,
                     Notifications.ExpiringSoonEnabled,
                     Notifications.PreparedBottleAgingEnabled,
@@ -208,6 +209,7 @@ public sealed class SettingsModel : PageModel
         var overview = await _notificationService.GetOverviewAsync(context.User.Id, context.Family.Id);
         Notifications = new NotificationInput
         {
+            AutomaticEmailEnabled = overview.Preferences.AutomaticEmailEnabled,
             StockLowEnabled = overview.Preferences.StockLowEnabled,
             ExpiringSoonEnabled = overview.Preferences.ExpiringSoonEnabled,
             PreparedBottleAgingEnabled = overview.Preferences.PreparedBottleAgingEnabled,
@@ -307,6 +309,7 @@ public sealed class SettingsModel : PageModel
 
     public sealed class NotificationInput
     {
+        public bool AutomaticEmailEnabled { get; set; }
         public bool StockLowEnabled { get; set; } = true;
         public bool ExpiringSoonEnabled { get; set; } = true;
         public bool PreparedBottleAgingEnabled { get; set; } = true;

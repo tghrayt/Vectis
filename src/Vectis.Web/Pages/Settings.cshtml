@@ -103,6 +103,10 @@
     </div>
 
     <div class="notification-settings">
+        <label class="toggle-row highlight-toggle">
+            <input asp-for="Notifications.AutomaticEmailEnabled" type="checkbox" disabled="@(!Model.CanEdit)" />
+            <span>Envoi automatique active</span>
+        </label>
         <label class="toggle-row">
             <input asp-for="Notifications.StockLowEnabled" type="checkbox" disabled="@(!Model.CanEdit)" />
             <span>Stock faible</span>
