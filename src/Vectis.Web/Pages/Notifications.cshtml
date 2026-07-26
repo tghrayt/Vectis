@@ -7,7 +7,7 @@
 <section class="page-head">
     <div>
         <h1>Notifications</h1>
-        <p>Alertes e-mail detectees a partir du stock, des biberons et des preferences famille.</p>
+        <p>Supervise les alertes e-mail du stock, des expirations et des biberons en attente.</p>
     </div>
     <a class="button" asp-page="/Settings"><svg class="icon"><use href="#icon-settings" /></svg>Preferences</a>
 </section>
@@ -21,17 +21,66 @@
     </div>
 }
 
+@if (Model.TestResult is not null && Model.TestResult.Sent)
+{
+    <div class="card notice" style="margin-bottom:16px">
+        <p>@Model.TestResult.Message</p>
+    </div>
+}
+
 @if (Model.Overview is not null)
 {
-    <section class="card operations-card">
+    <section class="notification-command">
+        <article class="notification-hero @Model.SmtpStatusClass">
+            <span class="eyebrow">Etat notifications</span>
+            <h2>@Model.SmtpStatusLabel</h2>
+            <p>@Model.AutomaticStatusLabel. Dernier evenement : @Model.LastDeliveryLabel.</p>
+            <div class="notification-actions">
+                <form method="post" asp-page-handler="Send">
+                    <button class="primary" type="submit" disabled="@(!Model.CanSend || Model.Overview.Alerts.Count == 0)">
+                        <svg class="icon"><use href="#icon-alert" /></svg>Envoyer les alertes
+                    </button>
+                </form>
+                <form method="post" asp-page-handler="Test">
+                    <button type="submit" disabled="@(!Model.CanSend)">
+                        <svg class="icon"><use href="#icon-check" /></svg>Tester l'e-mail
+                    </button>
+                </form>
+            </div>
+        </article>
+        <aside class="notification-metrics">
+            <div><span>Alertes actives</span><strong>@Model.Overview.Alerts.Count</strong><small>Selon les regles famille</small></div>
+            <div><span>Envoyees</span><strong>@Model.SentCount</strong><small>Historique recent</small></div>
+            <div><span>Echecs</span><strong>@Model.FailedCount</strong><small>A surveiller</small></div>
+            <div><span>Ignorees</span><strong>@Model.IgnoredCount</strong><small>Cooldown ou regle</small></div>
+        </aside>
+    </section>
+
+    <section class="grid three notification-rules">
+        <article class="card rule-card @(Model.Overview.Preferences.StockLowEnabled ? "ok" : "disabled-alert")">
+            <span class="pill @(Model.Overview.Preferences.StockLowEnabled ? "ok" : "status-ignored")">@(Model.Overview.Preferences.StockLowEnabled ? "Activee" : "Desactivee")</span>
+            <h2>Stock faible</h2>
+            <p>Declenchement quand le stock descend a @Model.Overview.Preferences.StockLowBottleThreshold biberon(s) ou moins.</p>
+        </article>
+        <article class="card rule-card @(Model.Overview.Preferences.ExpiringSoonEnabled ? "ok" : "disabled-alert")">
+            <span class="pill @(Model.Overview.Preferences.ExpiringSoonEnabled ? "ok" : "status-ignored")">@(Model.Overview.Preferences.ExpiringSoonEnabled ? "Activee" : "Desactivee")</span>
+            <h2>Lait bientot expire</h2>
+            <p>Surveillance des contenants qui expirent dans les @Model.Overview.Preferences.ExpiringSoonHours prochaines heures.</p>
+        </article>
+        <article class="card rule-card @(Model.Overview.Preferences.PreparedBottleAgingEnabled ? "ok" : "disabled-alert")">
+            <span class="pill @(Model.Overview.Preferences.PreparedBottleAgingEnabled ? "ok" : "status-ignored")">@(Model.Overview.Preferences.PreparedBottleAgingEnabled ? "Activee" : "Desactivee")</span>
+            <h2>Biberon en attente</h2>
+            <p>Alerte apres @Model.Overview.Preferences.PreparedBottleAgeMinutes minutes sans consommation enregistree.</p>
+        </article>
+    </section>
+
+    <section class="card operations-card" style="margin-top:16px">
         <div class="card-head">
             <div>
-                <h2>Alertes actives</h2>
+                <h2>Alertes a traiter</h2>
                 <p>Seules les alertes activees dans les preferences peuvent etre envoyees.</p>
             </div>
-            <form method="post" asp-page-handler="Send">
-                <button class="primary" type="submit" disabled="@(!Model.CanSend || Model.Overview.Alerts.Count == 0)"><svg class="icon"><use href="#icon-alert" /></svg>Envoyer maintenant</button>
-            </form>
+            <span class="pill">@Model.Overview.Alerts.Count alerte(s)</span>
         </div>
 
         @if (Model.Overview.Alerts.Count == 0)
@@ -60,7 +109,7 @@
         <div class="card-head">
             <div>
                 <h2>Derniers envois</h2>
-                <p>Historique technique des notifications envoyees ou ignorees.</p>
+                <p>Historique technique des notifications envoyees, ignorees ou en echec.</p>
             </div>
         </div>
         <div class="table-wrap">
