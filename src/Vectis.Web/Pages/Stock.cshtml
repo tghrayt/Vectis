@@ -7,31 +7,101 @@
 <section class="page-head">
     <div>
         <h1>Stock</h1>
-        <p>Contenants disponibles tries par expiration estimee.</p>
+        <p>Priorise les contenants, surveille les expirations et prepare les biberons sans perdre le fil.</p>
     </div>
-    <a class="button primary" asp-page="/Pumping">Ajouter</a>
+    <div class="toolbar">
+        <a class="button primary" asp-page="/Pumping"><svg class="icon"><use href="#icon-plus" /></svg>Ajouter un tirage</a>
+        <a class="button" asp-page="/Bottle"><svg class="icon"><use href="#icon-bottle" /></svg>Preparer</a>
+    </div>
 </section>
 
-<div class="card">
-    <div class="table-wrap">
-        <table>
-            <thead><tr><th>ID</th><th>Quantite</th><th>Lieu</th><th>Statut</th><th>Expiration</th></tr></thead>
-            <tbody>
-            @foreach (var item in Model.Containers)
-            {
-                <tr>
-                    <td>@item.Id.ToString()[..8]</td>
-                    <td><span class="pill">@item.RemainingQuantityMl ml</span></td>
-                    <td>@DisplayLabels.Location(item.Location)</td>
-                    <td>@DisplayLabels.MilkStatus(item.Status)</td>
-                    <td>@item.EstimatedExpiresAt.LocalDateTime.ToString("g")</td>
-                </tr>
-            }
-            @if (Model.Containers.Count == 0)
-            {
-                <tr><td colspan="5" class="muted">Aucun contenant disponible.</td></tr>
-            }
-            </tbody>
-        </table>
+@if (Model.Summary is not null)
+{
+    <section class="stock-overview">
+        <article class="stock-hero">
+            <span class="eyebrow">Stock utilisable</span>
+            <strong>@Model.Summary.TotalAvailableMl ml</strong>
+            <p>@Model.Summary.EstimatedBottles biberon(s) estimes selon le volume habituel.</p>
+        </article>
+        <article class="stock-signal danger">
+            <span>A utiliser vite</span>
+            <strong>@Model.Summary.ExpiringSoonMl ml</strong>
+            <small>Expiration dans les prochaines 24 h</small>
+        </article>
+        <article class="stock-signal">
+            <span>Refrigerateur</span>
+            <strong>@Model.Summary.RefrigeratorMl ml</strong>
+            <small>Stock pret a utiliser</small>
+        </article>
+        <article class="stock-signal">
+            <span>Congelateur</span>
+            <strong>@Model.Summary.FreezerMl ml</strong>
+            <small>Reserve longue duree</small>
+        </article>
+    </section>
+}
+
+<nav class="filter-tabs" aria-label="Filtres du stock">
+    @foreach (var filter in Model.Filters)
+    {
+        <a class="@(Model.ActiveFilter == filter.Key ? "active" : "")" asp-page="/Stock" asp-route-filter="@filter.Key">
+            <span>@filter.Label</span>
+            <strong>@filter.Count</strong>
+        </a>
+    }
+</nav>
+
+@if (Model.Rows.Count == 0)
+{
+    <div class="card notice stack">
+        <h2>Aucun contenant dans cette vue</h2>
+        <p>Change le filtre ou ajoute un tirage pour alimenter le stock.</p>
+        <a class="button primary" asp-page="/Pumping"><svg class="icon"><use href="#icon-plus" /></svg>Ajouter un tirage</a>
     </div>
-</div>
+}
+else
+{
+    <section class="stock-board">
+        @foreach (var row in Model.Rows)
+        {
+            <article class="stock-item @row.PriorityClass">
+                <div class="stock-item-main">
+                    <div class="stock-id">
+                        <span class="pill @row.PriorityClass">@row.Priority</span>
+                        <strong>@row.Container.Id.ToString()[..8]</strong>
+                    </div>
+                    <div class="stock-volume">
+                        <strong>@row.Container.RemainingQuantityMl ml</strong>
+                        <span>@DisplayLabels.MilkStatus(row.Container.Status)</span>
+                    </div>
+                </div>
+
+                <div class="stock-meta">
+                    <div>
+                        <span>Lieu</span>
+                        <strong>@DisplayLabels.Location(row.Container.Location)</strong>
+                    </div>
+                    <div>
+                        <span>Expiration</span>
+                        <strong>@row.ExpirationLabel</strong>
+                        <small>@row.Container.EstimatedExpiresAt.LocalDateTime.ToString("g")</small>
+                    </div>
+                    <div>
+                        <span>Age</span>
+                        <strong>@row.AgeLabel</strong>
+                        <small>@row.Container.PumpedAt.LocalDateTime.ToString("g")</small>
+                    </div>
+                </div>
+
+                <div class="expiry-track" aria-label="Progression vers expiration">
+                    <span style="width:@row.ExpirationProgress%"></span>
+                </div>
+
+                <div class="stock-actions">
+                    <a class="button primary" asp-page="/Bottle"><svg class="icon"><use href="#icon-bottle" /></svg>Preparer</a>
+                    <a class="button" asp-page="/History"><svg class="icon"><use href="#icon-history" /></svg>Historique</a>
+                </div>
+            </article>
+        }
+    </section>
+}
