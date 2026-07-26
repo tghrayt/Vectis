@@ -1,0 +1,13 @@
+**/.git
+**/.vs
+**/.vscode
+**/bin
+**/obj
+**/App_Data
+**/node_modules
+**/.env
+**/.env.*
+*.user
+*.suo
+*.tar
+*.tar.gz

@@ -1,0 +1,82 @@
+name: Deploy to VM
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: vectis-production
+  cancel-in-progress: true
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore src/Vectis.Web/Vectis.Web.csproj
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet run --configuration Release --project tests/Vectis.Tests
+
+      - name: Build Docker image
+        run: docker build --pull -t vectis-app:${{ github.sha }} -t vectis-app:latest .
+
+      - name: Save Docker image
+        run: docker save vectis-app:${{ github.sha }} vectis-app:latest | gzip > vectis-app.tar.gz
+
+      - name: Prepare SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p "${{ secrets.VM_PORT }}" "${{ secrets.VM_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Copy deployment files
+        run: |
+          ssh -p "${{ secrets.VM_PORT }}" "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}" "sudo mkdir -p /opt/vectis && sudo chown ${{ secrets.VM_USER }}:${{ secrets.VM_USER }} /opt/vectis"
+          scp -P "${{ secrets.VM_PORT }}" docker-compose.prod.yml vectis-app.tar.gz "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:/opt/vectis/"
+
+      - name: Deploy on VM
+        run: |
+          ssh -p "${{ secrets.VM_PORT }}" "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}" << 'EOF'
+          set -euo pipefail
+          cd /opt/vectis
+
+          cat > .env << 'ENVEOF'
+          IMAGE_TAG=${{ github.sha }}
+          APP_PORT=${{ vars.APP_PORT || '8080' }}
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          SMTP_ENABLED=${{ vars.SMTP_ENABLED || 'false' }}
+          SMTP_HOST=${{ secrets.SMTP_HOST }}
+          SMTP_PORT=${{ vars.SMTP_PORT || '587' }}
+          SMTP_USERNAME=${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM_EMAIL=${{ secrets.SMTP_FROM_EMAIL }}
+          SMTP_FROM_NAME=${{ vars.SMTP_FROM_NAME || 'Vectis' }}
+          SMTP_ENABLE_SSL=${{ vars.SMTP_ENABLE_SSL || 'true' }}
+          ENVEOF
+
+          docker load < vectis-app.tar.gz
+          docker compose -f docker-compose.prod.yml --env-file .env up -d --remove-orphans
+          docker image prune -f
+          rm -f vectis-app.tar.gz
+          EOF
+
+      - name: Smoke test
+        run: |
+          sleep 10
+          curl --fail --show-error --max-time 20 "http://${{ secrets.VM_HOST }}:${{ vars.APP_PORT || '8080' }}/health"
