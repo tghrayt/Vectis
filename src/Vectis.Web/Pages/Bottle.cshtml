@@ -7,7 +7,7 @@
 <section class="page-head">
     <div>
         <h1>Preparer un biberon</h1>
-        <p>Choisis le lait utilise. Le biberon restera en attente jusqu'au repas.</p>
+        <p>Preparation guidee avec le lait prioritaire pour garder une trace fiable du stock.</p>
     </div>
     <a class="button" asp-page="/Feed"><svg class="icon"><use href="#icon-feed" /></svg>Donner un biberon</a>
 </section>
@@ -22,64 +22,143 @@
 }
 else
 {
+    <section class="bottle-planner">
+        <article class="bottle-recommendation">
+            <span class="eyebrow">Preparation conseillee</span>
+            <h2>@Model.UsualBottleMl ml pour @Model.BabyName</h2>
+            <p>Vectis selectionne automatiquement le contenant qui expire le plus tot. Ajuste seulement si le repas prevu est different.</p>
+            <div class="recommendation-strip">
+                <div><span>Source prioritaire</span><strong>@Model.RecommendedSourceLabel</strong></div>
+                <div><span>Stock total</span><strong>@Model.TotalAvailableMl ml</strong></div>
+                <div><span>Autonomie</span><strong>@Model.AvailableBottleCount biberon(s)</strong></div>
+            </div>
+        </article>
+        <aside class="source-priority-list">
+            <span class="eyebrow">Ordre d'utilisation</span>
+            @foreach (var option in Model.SourceOptions.Take(3))
+            {
+                <div class="source-priority-row">
+                    <span class="pill @option.PriorityClass">@option.PriorityLabel</span>
+                    <strong>@option.ShortId - @option.RemainingQuantityMl ml</strong>
+                    <small>@option.LocationLabel - exp @option.ExpirationLabel</small>
+                </div>
+            }
+        </aside>
+    </section>
+
     <form method="post" class="stack">
         <div asp-validation-summary="All" class="danger"></div>
 
         <section class="card stack">
             <div class="card-head">
                 <div>
-                    <h2>Lait utilise</h2>
-                    <p>La source 1 est obligatoire. La source 2 sert seulement si tu melanges deux contenants.</p>
+                    <h2>Sources du biberon</h2>
+                    <p>La source 1 est preselectionnee. La source 2 complete automatiquement si le volume habituel depasse le premier contenant.</p>
                 </div>
                 <span class="pill"><span id="prepared-total">@((Model.Input.Container1Ml + Model.Input.Container2Ml).ToString())</span> ml prepares</span>
             </div>
 
-            <div class="grid two">
+            <div class="bottle-source-grid">
                 <label>Source 1
-                    <select asp-for="Input.Container1Id">
+                    <select asp-for="Input.Container1Id" data-source-select>
                         <option value="">Choisir</option>
-                        @foreach (var container in Model.Containers)
+                        @foreach (var option in Model.SourceOptions)
                         {
-                            <option value="@container.Id">@container.Id.ToString()[..8] - @container.RemainingQuantityMl ml - @DisplayLabels.Location(container.Location) - exp @container.EstimatedExpiresAt.LocalDateTime.ToString("g")</option>
+                            <option value="@option.Id" data-quantity="@option.RemainingQuantityMl">
+                                @option.ShortId - @option.RemainingQuantityMl ml - @option.LocationLabel - exp @option.ExpirationLabel
+                            </option>
                         }
                     </select>
                 </label>
                 <label>Quantite source 1 (ml)
-                    <input asp-for="Input.Container1Ml" type="number" min="0" data-bottle-source />
+                    <input asp-for="Input.Container1Ml" type="number" min="0" data-bottle-source data-source-quantity />
                 </label>
                 <label>Source 2
-                    <select asp-for="Input.Container2Id">
+                    <select asp-for="Input.Container2Id" data-source-select>
                         <option value="">Aucune</option>
-                        @foreach (var container in Model.Containers)
+                        @foreach (var option in Model.SourceOptions)
                         {
-                            <option value="@container.Id">@container.Id.ToString()[..8] - @container.RemainingQuantityMl ml - @DisplayLabels.Location(container.Location) - exp @container.EstimatedExpiresAt.LocalDateTime.ToString("g")</option>
+                            <option value="@option.Id" data-quantity="@option.RemainingQuantityMl">
+                                @option.ShortId - @option.RemainingQuantityMl ml - @option.LocationLabel - exp @option.ExpirationLabel
+                            </option>
                         }
                     </select>
                 </label>
                 <label>Quantite source 2 (ml)
-                    <input asp-for="Input.Container2Ml" type="number" min="0" data-bottle-source />
+                    <input asp-for="Input.Container2Ml" type="number" min="0" data-bottle-source data-source-quantity />
                 </label>
+            </div>
+
+            <div class="prep-status" data-prep-status>
+                <div>
+                    <span>Objectif habituel</span>
+                    <strong>@Model.UsualBottleMl ml</strong>
+                </div>
+                <div>
+                    <span>Reste a ajuster</span>
+                    <strong><span data-prep-delta>0</span> ml</strong>
+                </div>
+                <div>
+                    <span>Controle</span>
+                    <strong data-prep-message>Pret</strong>
+                </div>
             </div>
         </section>
 
         <section class="card stack">
             <h2>Details</h2>
-            <label>Notes <textarea asp-for="Input.Notes"></textarea></label>
-            <button class="primary" type="submit"><svg class="icon"><use href="#icon-bottle" /></svg>Preparer le biberon</button>
+            <label>Notes <textarea asp-for="Input.Notes" placeholder="Contexte du repas, temperature, consigne..."></textarea></label>
+            <button class="primary" type="submit"><svg class="icon"><use href="#icon-bottle" /></svg>Preparer et passer au repas</button>
         </section>
     </form>
 
     <script>
         (() => {
+            const target = Number("@Model.UsualBottleMl");
             const sources = document.querySelectorAll("[data-bottle-source]");
+            const quantities = document.querySelectorAll("[data-source-quantity]");
+            const selects = document.querySelectorAll("[data-source-select]");
             const total = document.getElementById("prepared-total");
+            const delta = document.querySelector("[data-prep-delta]");
+            const message = document.querySelector("[data-prep-message]");
+            const status = document.querySelector("[data-prep-status]");
+
+            const selectedMax = (input) => {
+                const field = input.closest("label");
+                const select = field?.previousElementSibling?.querySelector?.("select") ?? field?.parentElement?.querySelector?.("select");
+                const option = select?.selectedOptions?.[0];
+                return Number(option?.dataset.quantity || 0);
+            };
+
+            const refreshLimits = () => {
+                quantities.forEach(input => {
+                    const max = selectedMax(input);
+                    input.max = max;
+                    if (max > 0 && Number(input.value || 0) > max) {
+                        input.value = max;
+                    }
+                });
+            };
 
             const refresh = () => {
+                refreshLimits();
                 const prepared = Array.from(sources).reduce((sum, input) => sum + Number(input.value || 0), 0);
+                const missing = target - prepared;
                 total.textContent = prepared;
+                delta.textContent = Math.abs(missing);
+
+                status.classList.toggle("warning", missing !== 0);
+                if (missing > 0) {
+                    message.textContent = "A completer";
+                } else if (missing < 0) {
+                    message.textContent = "Au-dessus";
+                } else {
+                    message.textContent = "Pret";
+                }
             };
 
             sources.forEach(input => input.addEventListener("input", refresh));
+            selects.forEach(select => select.addEventListener("change", refresh));
             refresh();
         })();
     </script>

@@ -431,6 +431,110 @@ p { color: var(--muted); line-height: 1.6; }
   justify-content: end;
 }
 
+.bottle-planner {
+  align-items: stretch;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+  margin-bottom: 16px;
+}
+
+.bottle-recommendation,
+.source-priority-list {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.bottle-recommendation {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--primary) 14%, var(--panel)), var(--panel) 58%),
+    var(--panel);
+  border-left: 5px solid var(--primary);
+}
+
+.bottle-recommendation h2 {
+  font-size: clamp(1.65rem, 3vw, 2.35rem);
+}
+
+.bottle-recommendation p {
+  margin: 0;
+  max-width: 62ch;
+}
+
+.recommendation-strip {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.recommendation-strip div {
+  background: color-mix(in srgb, var(--bg) 68%, var(--panel));
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 5px;
+  min-height: 82px;
+  padding: 12px;
+}
+
+.recommendation-strip span,
+.recommendation-strip small,
+.source-priority-row small {
+  color: var(--muted);
+}
+
+.source-priority-list {
+  align-content: start;
+}
+
+.source-priority-row {
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 6px;
+  padding-bottom: 12px;
+}
+
+.source-priority-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.bottle-source-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.35fr);
+}
+
+.prep-status {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.prep-status div {
+  background: color-mix(in srgb, var(--primary) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--line));
+  border-radius: 8px;
+  display: grid;
+  gap: 5px;
+  min-height: 78px;
+  padding: 12px;
+}
+
+.prep-status.warning div {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 22%, var(--line));
+}
+
+.prep-status span {
+  color: var(--muted);
+}
+
 .settings-layout {
   align-items: start;
   display: grid;
@@ -959,7 +1063,7 @@ td {
 
 @media (max-width: 860px) {
   .topbar { grid-template-columns: 1fr; }
-  .grid.stats, .grid.two, .grid.three, .dashboard-band, .dashboard-main, .priority-strip, .alert-grid, .action-alert, .pending-bottle, .settings-layout, .notification-settings, .command-center, .decision-panel, .stock-overview, .stock-item-main, .stock-meta, .stock-actions { grid-template-columns: 1fr; }
+  .grid.stats, .grid.two, .grid.three, .dashboard-band, .dashboard-main, .priority-strip, .alert-grid, .action-alert, .pending-bottle, .settings-layout, .notification-settings, .command-center, .decision-panel, .stock-overview, .stock-item-main, .stock-meta, .stock-actions, .bottle-planner, .recommendation-strip, .bottle-source-grid, .prep-status { grid-template-columns: 1fr; }
   .page-head { align-items: start; flex-direction: column; }
   .table-actions { flex-wrap: wrap; }
   .card-head { flex-direction: column; }
