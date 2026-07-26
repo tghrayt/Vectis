@@ -8,6 +8,16 @@ using Vectis.Web.Services;
 
 namespace Vectis.Web.Pages;
 
+public sealed record PendingBottleOption(
+    Guid Id,
+    string ShortId,
+    int TotalQuantityMl,
+    int SourceCount,
+    string PreparedLabel,
+    string AgeLabel,
+    string PriorityLabel,
+    string PriorityClass);
+
 [Authorize]
 public sealed class FeedModel : PageModel
 {
@@ -21,6 +31,8 @@ public sealed class FeedModel : PageModel
     }
 
     public IReadOnlyList<PreparedBottle> PendingBottles { get; private set; } = [];
+    public IReadOnlyList<PendingBottleOption> PendingOptions { get; private set; } = [];
+    public PendingBottleOption? SelectedBottle { get; private set; }
     public IReadOnlyList<SelectListItem> ReactionOptions { get; } = Enum.GetValues<FeedingReaction>()
         .Select(reaction => new SelectListItem(DisplayLabels.FeedingReaction(reaction), reaction.ToString()))
         .ToList();
@@ -47,6 +59,7 @@ public sealed class FeedModel : PageModel
         {
             Input.BottleId = selected.Id;
             Input.ConsumedMl = selected.TotalQuantityMl;
+            SelectedBottle = PendingOptions.FirstOrDefault(option => option.Id == selected.Id);
         }
 
         return Page();
@@ -63,6 +76,7 @@ public sealed class FeedModel : PageModel
         if (!ModelState.IsValid)
         {
             await LoadAsync(context);
+            SelectBottle(Input.BottleId);
             return Page();
         }
 
@@ -75,6 +89,7 @@ public sealed class FeedModel : PageModel
         {
             ModelState.AddModelError("", ex.Message);
             await LoadAsync(context);
+            SelectBottle(Input.BottleId);
             return Page();
         }
     }
@@ -82,6 +97,56 @@ public sealed class FeedModel : PageModel
     private async Task LoadAsync(CurrentContext context)
     {
         PendingBottles = await _bottleService.GetPendingAsync(context.User.Id, context.Baby!.Id);
+        PendingOptions = PendingBottles.Select(BuildPendingOption).ToList();
+        SelectedBottle = PendingOptions.FirstOrDefault();
+    }
+
+    private void SelectBottle(Guid bottleId)
+    {
+        SelectedBottle = PendingOptions.FirstOrDefault(option => option.Id == bottleId) ?? PendingOptions.FirstOrDefault();
+    }
+
+    private static PendingBottleOption BuildPendingOption(PreparedBottle bottle)
+    {
+        var age = DateTimeOffset.UtcNow - bottle.PreparedAt;
+        var priorityLabel = "Pret";
+        var priorityClass = "ok";
+
+        if (age >= TimeSpan.FromHours(2))
+        {
+            priorityLabel = "A traiter maintenant";
+            priorityClass = "danger";
+        }
+        else if (age >= TimeSpan.FromMinutes(90))
+        {
+            priorityLabel = "Bientot urgent";
+            priorityClass = "warning";
+        }
+
+        return new PendingBottleOption(
+            bottle.Id,
+            bottle.Id.ToString()[..8],
+            bottle.TotalQuantityMl,
+            bottle.Sources.Count,
+            bottle.PreparedAt.LocalDateTime.ToString("g"),
+            FormatAge(age),
+            priorityLabel,
+            priorityClass);
+    }
+
+    private static string FormatAge(TimeSpan age)
+    {
+        if (age.TotalMinutes < 1)
+        {
+            return "Prepare a l'instant";
+        }
+
+        if (age.TotalHours < 1)
+        {
+            return $"Prepare il y a {Math.Max(1, (int)Math.Floor(age.TotalMinutes))} min";
+        }
+
+        return $"Prepare il y a {Math.Max(1, (int)Math.Floor(age.TotalHours))} h {age.Minutes:00}";
     }
 
     public sealed class FeedInput

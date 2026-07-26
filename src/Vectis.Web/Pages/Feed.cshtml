@@ -7,7 +7,7 @@
 <section class="page-head">
     <div>
         <h1>Donner un biberon</h1>
-        <p>Selectionne un biberon prepare, puis note ce que bebe a bu.</p>
+        <p>Traite les biberons prepares, note la quantite bue et garde le reste sous controle.</p>
     </div>
     <a class="button" asp-page="/Bottle"><svg class="icon"><use href="#icon-bottle" /></svg>Preparer un biberon</a>
 </section>
@@ -29,58 +29,129 @@
 }
 else
 {
-    <form method="post" class="card stack">
-        <div asp-validation-summary="All" class="danger"></div>
-        <div class="quick-feed-actions">
-            <button type="button" class="button" data-feed-mode="full"><svg class="icon"><use href="#icon-check" /></svg>Tout bu</button>
-            <button type="button" class="button" data-feed-mode="partial"><svg class="icon"><use href="#icon-half" /></svg>Partiel</button>
-            <button type="button" class="button danger-button" data-feed-mode="discard"><svg class="icon"><use href="#icon-trash" /></svg>Non consomme / jeter</button>
-        </div>
-        <div class="grid two">
-            <label>Biberon prepare
-                <select asp-for="Input.BottleId" data-bottle-select>
-                    @foreach (var bottle in Model.PendingBottles)
-                    {
-                        <option value="@bottle.Id" data-quantity="@bottle.TotalQuantityMl">
-                            @bottle.PreparedAt.LocalDateTime.ToString("g") - @bottle.TotalQuantityMl ml - @bottle.Sources.Count source(s)
-                        </option>
-                    }
-                </select>
-            </label>
-            <label>Quantite bue (ml)
-                <input asp-for="Input.ConsumedMl" type="number" min="0" data-consumed />
-            </label>
-            <label>Reaction
-                <select asp-for="Input.Reaction" asp-items="Model.ReactionOptions"></select>
-            </label>
-            <label>Devenir du reste
-                <input asp-for="Input.LeftoverOutcome" placeholder="jete, conserve, autre..." data-leftover />
-            </label>
-        </div>
-        <label>Notes <textarea asp-for="Input.Notes"></textarea></label>
-        <button class="primary" type="submit" data-submit-label><svg class="icon"><use href="#icon-feed" /></svg><span data-submit-text>Enregistrer la consommation</span></button>
-    </form>
+    <section class="feed-workbench">
+        <aside class="feed-queue">
+            <span class="eyebrow">File d'attente</span>
+            @foreach (var bottle in Model.PendingOptions)
+            {
+                <article class="feed-queue-item @bottle.PriorityClass" data-queue-card="@bottle.Id">
+                    <span class="pill @bottle.PriorityClass">@bottle.PriorityLabel</span>
+                    <strong>@bottle.TotalQuantityMl ml</strong>
+                    <small>@bottle.AgeLabel - @bottle.SourceCount source(s)</small>
+                </article>
+            }
+        </aside>
+
+        <form method="post" class="card stack feed-form">
+            <div asp-validation-summary="All" class="danger"></div>
+            <div class="card-head">
+                <div>
+                    <h2>Consommation</h2>
+                    <p>Choisis un biberon, puis utilise une action rapide ou ajuste la quantite manuellement.</p>
+                </div>
+                <span class="pill">@Model.PendingOptions.Count en attente</span>
+            </div>
+
+            <div class="selected-feed-card" data-selected-card>
+                <span class="pill @Model.SelectedBottle?.PriorityClass" data-selected-priority>@Model.SelectedBottle?.PriorityLabel</span>
+                <strong data-selected-title>@Model.SelectedBottle?.TotalQuantityMl ml prepares</strong>
+                <small data-selected-meta>@Model.SelectedBottle?.AgeLabel - prepare le @Model.SelectedBottle?.PreparedLabel</small>
+            </div>
+
+            <div class="quick-feed-actions feed-mode-grid">
+                <button type="button" class="button" data-feed-mode="full"><svg class="icon"><use href="#icon-check" /></svg>Tout bu</button>
+                <button type="button" class="button" data-feed-mode="partial"><svg class="icon"><use href="#icon-half" /></svg>Partiel</button>
+                <button type="button" class="button danger-button" data-feed-mode="discard"><svg class="icon"><use href="#icon-trash" /></svg>Non consomme / jeter</button>
+            </div>
+
+            <div class="grid two">
+                <label>Biberon prepare
+                    <select asp-for="Input.BottleId" data-bottle-select>
+                        @foreach (var bottle in Model.PendingOptions)
+                        {
+                            <option value="@bottle.Id"
+                                    data-quantity="@bottle.TotalQuantityMl"
+                                    data-priority="@bottle.PriorityLabel"
+                                    data-priority-class="@bottle.PriorityClass"
+                                    data-age="@bottle.AgeLabel"
+                                    data-prepared="@bottle.PreparedLabel"
+                                    data-sources="@bottle.SourceCount">
+                                @bottle.PreparedLabel - @bottle.TotalQuantityMl ml - @bottle.SourceCount source(s)
+                            </option>
+                        }
+                    </select>
+                </label>
+                <label>Quantite bue (ml)
+                    <input asp-for="Input.ConsumedMl" type="number" min="0" data-consumed />
+                </label>
+                <label>Reaction
+                    <select asp-for="Input.Reaction" asp-items="Model.ReactionOptions"></select>
+                </label>
+                <label>Devenir du reste
+                    <input asp-for="Input.LeftoverOutcome" placeholder="jete, conserve, autre..." data-leftover />
+                </label>
+            </div>
+
+            <div class="feed-result-grid">
+                <div>
+                    <span>Prepare</span>
+                    <strong><span data-prepared-total>0</span> ml</strong>
+                </div>
+                <div>
+                    <span>Bu</span>
+                    <strong><span data-consumed-total>0</span> ml</strong>
+                </div>
+                <div>
+                    <span>Reste</span>
+                    <strong><span data-leftover-total>0</span> ml</strong>
+                </div>
+            </div>
+
+            <label>Notes <textarea asp-for="Input.Notes" placeholder="Sommeil, reaction, contexte du repas..."></textarea></label>
+            <button class="primary" type="submit" data-submit-label><svg class="icon"><use href="#icon-feed" /></svg><span data-submit-text>Enregistrer la consommation</span></button>
+        </form>
+    </section>
 
     <script>
         (() => {
             const select = document.querySelector("[data-bottle-select]");
             const consumed = document.querySelector("[data-consumed]");
             const leftover = document.querySelector("[data-leftover]");
-            const submit = document.querySelector("[data-submit-label]");
             const submitText = document.querySelector("[data-submit-text]");
             const modeButtons = document.querySelectorAll("[data-feed-mode]");
+            const preparedTotal = document.querySelector("[data-prepared-total]");
+            const consumedTotal = document.querySelector("[data-consumed-total]");
+            const leftoverTotal = document.querySelector("[data-leftover-total]");
+            const selectedPriority = document.querySelector("[data-selected-priority]");
+            const selectedTitle = document.querySelector("[data-selected-title]");
+            const selectedMeta = document.querySelector("[data-selected-meta]");
+            const queueCards = document.querySelectorAll("[data-queue-card]");
 
-            const selectedQuantity = () => {
-                const option = select.selectedOptions[0];
-                return Number(option?.dataset.quantity || 0);
+            const selectedOption = () => select.selectedOptions[0];
+            const selectedQuantity = () => Number(selectedOption()?.dataset.quantity || 0);
+
+            const refreshSelectedCard = () => {
+                const option = selectedOption();
+                const quantity = selectedQuantity();
+                selectedPriority.textContent = option?.dataset.priority || "Pret";
+                selectedPriority.className = `pill ${option?.dataset.priorityClass || "ok"}`;
+                selectedTitle.textContent = `${quantity} ml prepares`;
+                selectedMeta.textContent = `${option?.dataset.age || ""} - prepare le ${option?.dataset.prepared || ""}`;
+                queueCards.forEach(card => card.classList.toggle("active", card.dataset.queueCard === select.value));
             };
 
             const refresh = () => {
                 const quantity = selectedQuantity();
                 consumed.max = quantity;
-                if (!consumed.value || Number(consumed.value) > quantity) {
+                if (Number(consumed.value || 0) > quantity) {
                     consumed.value = quantity;
                 }
+
+                const consumedMl = Number(consumed.value || 0);
+                preparedTotal.textContent = quantity;
+                consumedTotal.textContent = consumedMl;
+                leftoverTotal.textContent = Math.max(0, quantity - consumedMl);
+                refreshSelectedCard();
             };
 
             const setMode = (mode) => {
@@ -102,9 +173,12 @@ else
                     leftover.value = "jete";
                     submitText.textContent = "Marquer non consomme";
                 }
+
+                refresh();
             };
 
             select.addEventListener("change", refresh);
+            consumed.addEventListener("input", refresh);
             modeButtons.forEach(button => button.addEventListener("click", () => setMode(button.dataset.feedMode)));
             refresh();
         })();
