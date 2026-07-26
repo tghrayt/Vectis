@@ -24,7 +24,7 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Restore
-        run: dotnet restore src/Vectis.Web/Vectis.Web.csproj
+        run: dotnet restore
 
       - name: Build
         run: dotnet build --configuration Release --no-restore
