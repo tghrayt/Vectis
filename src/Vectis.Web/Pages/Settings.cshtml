@@ -1,32 +1,123 @@
 @page
 @model Vectis.Web.Pages.SettingsModel
 @{
-    ViewData["Title"] = "Regles";
+    ViewData["Title"] = "Profil et regles";
 }
 
 <section class="page-head">
     <div>
-        <h1>Regles de conservation</h1>
-        <p>Ces valeurs sont configurables. Verifie-les avec les recommandations sanitaires qui te concernent.</p>
+        <h1>Profil et regles</h1>
+        <p>Parametres utilises pour les estimations de stock, les biberons et la gestion famille.</p>
     </div>
 </section>
 
-<form method="post" class="card stack">
-    <div asp-validation-summary="ModelOnly" class="danger"></div>
-    <table>
-        <thead><tr><th>Lieu</th><th>Duree maximale (heures)</th></tr></thead>
-        <tbody>
-        @for (var i = 0; i < Model.Input.Rules.Count; i++)
-        {
-            <tr>
-                <td>
-                    @DisplayLabels.Location(Model.Input.Rules[i].Location)
-                    <input type="hidden" asp-for="Input.Rules[i].Location" />
-                </td>
-                <td><input asp-for="Input.Rules[i].DurationHours" type="number" min="1" /></td>
-            </tr>
-        }
-        </tbody>
-    </table>
-    <button class="primary" type="submit">Enregistrer les regles</button>
+@if (Model.SavedSection is not null)
+{
+    <div class="card notice" style="margin-bottom:16px">
+        <p>Reglages enregistres.</p>
+    </div>
+}
+
+@if (!Model.CanEdit)
+{
+    <div class="card notice" style="margin-bottom:16px">
+        <p>Lecture seule. Seul un administrateur de la famille peut modifier ces reglages.</p>
+    </div>
+}
+
+<div asp-validation-summary="All" class="danger"></div>
+
+<section class="settings-layout">
+    <form method="post" asp-page-handler="Baby" class="card stack">
+        <div class="card-head">
+            <div>
+                <h2>Profil bebe</h2>
+                <p>Ces informations alimentent les projections du dashboard.</p>
+            </div>
+            <span class="pill"><svg class="icon"><use href="#icon-bottle" /></svg>@Model.Baby.UsualBottleMl ml</span>
+        </div>
+
+        <div class="grid two">
+            <label>Prenom
+                <input asp-for="Baby.FirstName" disabled="@(!Model.CanEdit)" />
+            </label>
+            <label>Date de naissance
+                <input asp-for="Baby.BirthDate" type="date" disabled="@(!Model.CanEdit)" />
+            </label>
+            <label>Poids actuel (kg)
+                <input asp-for="Baby.CurrentWeightKg" type="number" min="0.5" max="30" step="0.01" disabled="@(!Model.CanEdit)" />
+            </label>
+            <label>Quantite habituelle par biberon (ml)
+                <input asp-for="Baby.UsualBottleMl" type="number" min="1" max="2000" disabled="@(!Model.CanEdit)" />
+            </label>
+        </div>
+
+        <label>Notes utiles
+            <textarea asp-for="Baby.Notes" disabled="@(!Model.CanEdit)"></textarea>
+        </label>
+
+        <button class="primary" type="submit" disabled="@(!Model.CanEdit)"><svg class="icon"><use href="#icon-check" /></svg>Enregistrer le profil</button>
+    </form>
+
+    <form method="post" asp-page-handler="Family" class="card stack">
+        <div class="card-head">
+            <div>
+                <h2>Famille</h2>
+                <p>Informations partagees par les membres connectes.</p>
+            </div>
+            <span class="pill"><svg class="icon"><use href="#icon-users" /></svg>@Model.Family.Language</span>
+        </div>
+
+        <label>Nom de la famille
+            <input asp-for="Family.Name" disabled="@(!Model.CanEdit)" />
+        </label>
+        <div class="grid two">
+            <label>Langue
+                <select asp-for="Family.Language" disabled="@(!Model.CanEdit)">
+                    <option value="fr">Francais</option>
+                    <option value="en">Anglais</option>
+                </select>
+            </label>
+            <label>Fuseau horaire
+                <select asp-for="Family.TimeZone" disabled="@(!Model.CanEdit)">
+                    <option value="Europe/Paris">Europe/Paris</option>
+                    <option value="Europe/Brussels">Europe/Brussels</option>
+                    <option value="Europe/London">Europe/London</option>
+                    <option value="America/New_York">America/New_York</option>
+                    <option value="America/Toronto">America/Toronto</option>
+                </select>
+            </label>
+        </div>
+
+        <button class="primary" type="submit" disabled="@(!Model.CanEdit)"><svg class="icon"><use href="#icon-check" /></svg>Enregistrer la famille</button>
+    </form>
+</section>
+
+<form method="post" asp-page-handler="Rules" class="card stack" style="margin-top:16px">
+    <div class="card-head">
+        <div>
+            <h2>Regles de conservation</h2>
+            <p>Ces valeurs restent configurables selon les recommandations sanitaires suivies.</p>
+        </div>
+        <span class="pill"><svg class="icon"><use href="#icon-settings" /></svg>@Model.Rules.Items.Count lieux</span>
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Lieu</th><th>Duree maximale (heures)</th></tr></thead>
+            <tbody>
+            @for (var i = 0; i < Model.Rules.Items.Count; i++)
+            {
+                <tr>
+                    <td>
+                        @DisplayLabels.Location(Model.Rules.Items[i].Location)
+                        <input type="hidden" asp-for="Rules.Items[i].Location" />
+                    </td>
+                    <td><input asp-for="Rules.Items[i].DurationHours" type="number" min="1" disabled="@(!Model.CanEdit)" /></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <button class="primary" type="submit" disabled="@(!Model.CanEdit)"><svg class="icon"><use href="#icon-check" /></svg>Enregistrer les regles</button>
 </form>
