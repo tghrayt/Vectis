@@ -19,7 +19,8 @@ Vectis est deployee dans le namespace Kubernetes `vectis` :
 - `vectis-web` : application ASP.NET Core ;
 - `vectis-db` : PostgreSQL dedie avec volume persistant ;
 - `Ingress` Traefik : route le host Vectis vers `vectis-web` ;
-- `cert-manager` : demande le certificat Let's Encrypt.
+- `cert-manager` : demande le certificat Let's Encrypt ;
+- `vectis-db-backup` : sauvegarde PostgreSQL quotidienne compressee.
 
 URL temporaire avant le domaine OVH :
 
@@ -39,7 +40,7 @@ Le workflow `.github/workflows/deploy-vm.yml` :
 4. importe l'image dans k3s/containerd ;
 5. installe `cert-manager` si absent ;
 6. applique les secrets, le StatefulSet PostgreSQL, le Deployment web et l'Ingress Traefik ;
-7. verifie `/health` en HTTPS.
+7. verifie `/health/ready` en HTTPS.
 
 ## Secrets GitHub requis
 
@@ -88,12 +89,13 @@ Depuis ton PC :
 
 ```bash
 curl https://vectis.51-210-40-78.sslip.io/health
+curl https://vectis.51-210-40-78.sslip.io/health/ready
 ```
 
 Sur la VM :
 
 ```bash
-sudo k3s kubectl -n vectis get pods,svc,ingress,certificate
+sudo k3s kubectl -n vectis get pods,svc,ingress,certificate,cronjob
 sudo k3s kubectl -n vectis logs deployment/vectis-web --tail=100
 sudo k3s kubectl -n cert-manager logs deployment/cert-manager --tail=100
 ```
@@ -112,10 +114,79 @@ Voir l'etat du deploiement :
 sudo k3s kubectl -n vectis rollout status deployment/vectis-web
 ```
 
-Sauvegarder PostgreSQL :
+## Sauvegardes PostgreSQL
+
+Une sauvegarde automatique tourne chaque nuit a `02:15 UTC`.
+
+Les fichiers sont stockes sur la VM dans :
+
+```text
+/opt/vectis/backups
+```
+
+La retention supprime automatiquement les fichiers de plus de 14 jours.
+
+Lister les sauvegardes :
+
+```bash
+sudo ls -lh /opt/vectis/backups
+```
+
+Lancer une sauvegarde manuelle :
+
+```bash
+sudo k3s kubectl -n vectis create job --from=cronjob/vectis-db-backup vectis-db-backup-manual-$(date -u +%Y%m%d%H%M%S)
+```
+
+Voir les jobs de sauvegarde :
+
+```bash
+sudo k3s kubectl -n vectis get jobs,pods -l app=vectis-db-backup
+```
+
+Suivre les logs de la derniere sauvegarde :
+
+```bash
+sudo k3s kubectl -n vectis logs -l app=vectis-db-backup --tail=100
+```
+
+Sauvegarder PostgreSQL directement :
 
 ```bash
 sudo k3s kubectl -n vectis exec statefulset/vectis-db -- pg_dump -U vectis vectis > vectis-backup.sql
+```
+
+Restaurer une sauvegarde compressee demande une fenetre de maintenance :
+
+```bash
+gunzip -c /opt/vectis/backups/<fichier>.sql.gz | sudo k3s kubectl -n vectis exec -i statefulset/vectis-db -- psql -U vectis -d vectis
+```
+
+## Monitoring simple
+
+Etat general :
+
+```bash
+sudo k3s kubectl -n vectis get pods,svc,ingress,certificate,cronjob,jobs
+```
+
+Evenements recents :
+
+```bash
+sudo k3s kubectl -n vectis get events --sort-by=.lastTimestamp
+```
+
+Logs applicatifs :
+
+```bash
+sudo k3s kubectl -n vectis logs deployment/vectis-web --tail=200
+sudo k3s kubectl -n vectis logs deployment/vectis-web -f
+```
+
+Etat HTTPS :
+
+```bash
+sudo k3s kubectl -n vectis describe certificate vectis-web-tls
 ```
 
 ## Domaine OVH plus tard

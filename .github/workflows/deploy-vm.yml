@@ -53,6 +53,7 @@ jobs:
       - name: Copy deployment files
         run: |
           ssh -p "${{ secrets.VM_PORT }}" "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}" "sudo mkdir -p /opt/vectis && sudo chown ${{ secrets.VM_USER }}:${{ secrets.VM_USER }} /opt/vectis"
+          ssh -p "${{ secrets.VM_PORT }}" "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}" "sudo mkdir -p /opt/vectis/backups && sudo chown 999:999 /opt/vectis/backups && sudo chmod 0770 /opt/vectis/backups"
           scp -P "${{ secrets.VM_PORT }}" vectis-app.tar.gz "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:/opt/vectis/"
           scp -P "${{ secrets.VM_PORT }}" -r k8s "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:/opt/vectis/"
 
@@ -99,13 +100,13 @@ jobs:
 
           sudo k3s kubectl -n vectis rollout restart deployment/vectis-web
           sudo k3s kubectl -n vectis rollout status deployment/vectis-web --timeout=240s
-          sudo k3s kubectl -n vectis get ingress,svc,pods
+          sudo k3s kubectl -n vectis get ingress,svc,pods,cronjob
           EOF
 
       - name: Smoke test
         run: |
           for attempt in {1..18}; do
-            if curl --fail --show-error --max-time 20 "https://${{ vars.APP_HOST || 'vectis.51-210-40-78.sslip.io' }}/health"; then
+            if curl --fail --show-error --max-time 20 "https://${{ vars.APP_HOST || 'vectis.51-210-40-78.sslip.io' }}/health/ready"; then
               exit 0
             fi
             echo "Waiting for HTTPS health check... attempt ${attempt}/18"

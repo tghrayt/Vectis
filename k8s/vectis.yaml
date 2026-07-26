@@ -32,6 +32,8 @@ spec:
       labels:
         app: vectis-db
     spec:
+      securityContext:
+        fsGroup: 999
       containers:
         - name: postgres
           image: postgres:16
@@ -50,6 +52,33 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 768Mi
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - vectis
+                - -d
+                - vectis
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - vectis
+                - -d
+                - vectis
+            initialDelaySeconds: 30
+            periodSeconds: 20
   volumeClaimTemplates:
     - metadata:
         name: data
@@ -87,6 +116,9 @@ spec:
       labels:
         app: vectis-web
     spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: vectis-web
           image: docker.io/library/vectis-app:__IMAGE_TAG__
@@ -98,6 +130,10 @@ spec:
               value: Production
             - name: ASPNETCORE_URLS
               value: http://+:8080
+            - name: Logging__LogLevel__Default
+              value: Information
+            - name: Logging__LogLevel__Microsoft.AspNetCore
+              value: Warning
             - name: ConnectionStrings__Vectis
               valueFrom:
                 secretKeyRef:
@@ -143,18 +179,30 @@ spec:
                 secretKeyRef:
                   name: vectis-secrets
                   key: SMTP_ENABLE_SSL
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           readinessProbe:
             httpGet:
-              path: /health
+              path: /health/ready
               port: 8080
             initialDelaySeconds: 10
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /health
+              path: /health/live
               port: 8080
             initialDelaySeconds: 30
             periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 192Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -180,3 +228,67 @@ spec:
                 name: vectis-web
                 port:
                   number: 80
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: vectis-db-backup
+  namespace: vectis
+spec:
+  schedule: "15 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: vectis-db-backup
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            fsGroup: 999
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: pg-backup
+              image: postgres:16
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: vectis-secrets
+                      key: POSTGRES_PASSWORD
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -eu
+                  mkdir -p /backups
+                  file="/backups/vectis-$(date -u +%Y%m%d-%H%M%S).sql.gz"
+                  pg_dump -h vectis-db -U vectis -d vectis | gzip > "$file"
+                  find /backups -type f -name 'vectis-*.sql.gz' -mtime +14 -delete
+                  ls -lh "$file"
+              volumeMounts:
+                - name: backups
+                  mountPath: /backups
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  cpu: 300m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+          volumes:
+            - name: backups
+              hostPath:
+                path: /opt/vectis/backups
+                type: DirectoryOrCreate

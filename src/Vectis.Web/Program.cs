@@ -66,6 +66,23 @@ app.UseAuthorization();
 
 app.MapStaticAssets();
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+app.MapGet("/health/live", () => Results.Ok(new { status = "live" }));
+app.MapGet("/health/ready", async (IDbContextFactory<VectisDbContext> dbFactory) =>
+{
+    try
+    {
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var canConnect = await db.Database.CanConnectAsync();
+
+        return canConnect
+            ? Results.Ok(new { status = "ready", database = "ok" })
+            : Results.Problem("La base de donnees n'est pas joignable.", statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+    catch
+    {
+        return Results.Problem("La verification de readiness a echoue.", statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+});
 app.MapRazorPages()
    .WithStaticAssets();
 
