@@ -293,6 +293,14 @@ FakesAssemblies/
 .ntvs_analysis.dat
 node_modules/
 
+# Mobile Capacitor local outputs
+mobile/**/node_modules/
+mobile/**/dist/
+mobile/**/.gradle/
+mobile/**/android/local.properties
+mobile/**/ios/App/Pods/
+mobile/**/ios/App/Podfile.lock
+
 # Visual Studio 6 build log
 *.plg
 

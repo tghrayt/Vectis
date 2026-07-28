@@ -1,0 +1,23 @@
+{
+  "appId": "com.tghrayt.vectis",
+  "appName": "Vectis",
+  "webDir": "www",
+  "server": {
+    "url": "https://vectis.51-210-40-78.sslip.io",
+    "cleartext": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "backgroundColor": "#f8fafc",
+      "androidSplashResourceName": "splash",
+      "showSpinner": false
+    }
+  },
+  "android": {
+    "allowMixedContent": false
+  },
+  "ios": {
+    "contentInset": "automatic"
+  }
+}

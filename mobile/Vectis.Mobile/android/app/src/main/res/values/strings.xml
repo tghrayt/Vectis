@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Vectis</string>
+    <string name="title_activity_main">Vectis</string>
+    <string name="package_name">com.tghrayt.vectis</string>
+    <string name="custom_url_scheme">com.tghrayt.vectis</string>
+</resources>
